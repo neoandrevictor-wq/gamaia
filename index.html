@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GAMA IA v13.0 // Hybrid Multi-Modal System</title>
+    <title>GAMA IA v14.0 // Hybrid Multi-Modal System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -37,7 +37,7 @@
         <div class="flex items-center gap-3">
             <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_red]" id="status-indicator"></div>
             <h1 class="text-2xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-cyan-400 to-pink-500">
-                GAMA IA <span class="text-sm font-mono text-gray-500 font-normal">v13.0</span>
+                GAMA IA <span class="text-sm font-mono text-gray-500 font-normal">v14.0</span>
             </h1>
         </div>
         <div class="font-mono text-xs text-gray-400 flex items-center gap-4">
@@ -104,8 +104,7 @@
     <script type="module">
         class MemoryEngine {
             constructor() {
-                // Incrementado para v13 para limpar o cache local e forçar novo formato caso necessário
-                this.dbKey = 'gama_ia_sessions_v13';
+                this.dbKey = 'gama_ia_sessions_v14';
                 this.sessions = this.loadAll();
                 this.currentSessionId = null;
             }
@@ -306,13 +305,21 @@
             escapeHTML(str) { return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t])); }
         }
 
+        // ==========================================
+        // WORKER SCRIPT: IMPORTAÇÃO ESTÁTICA NATIVA
+        // Foi exatamente isso que fez funcionar na sua versão anterior (v11)
+        // ==========================================
         const workerCode = `
+            import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
+            
             self.addEventListener('error', (err) => {
                 postMessage({ type: 'log', msg: 'Erro Crítico no Worker: ' + err.message, lvl: 'error' });
             });
 
+            env.allowLocalModels = false;
+            env.useBrowserCache = true;
+
             let textGenerator;
-            let tf; // Mantém a referência do módulo importado
 
             function extractResponse(out) {
                 const text = Array.isArray(out[0].generated_text) ? out[0].generated_text[out[0].generated_text.length - 1].content : String(out[0].generated_text).split('<|im_start|>assistant').pop().replace('<|im_end|>', '');
@@ -355,17 +362,10 @@
                 
                 if(action === 'INIT') {
                     try {
-                        postMessage({ type: 'log', msg: '[1/3] Engine Iniciada. Usando ES Modules Nativos...', lvl: 'info' });
-                        
-                        // CORREÇÃO GAMA IA v13: Uso de import() dinâmico para contornar restrições
-                        // de Extensões AdBlockers e limites modernos de segurança (CORS) em Blob Workers.
-                        tf = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1');
-                        
-                        tf.env.allowLocalModels = false;
-                        tf.env.useBrowserCache = true;
-                        
+                        postMessage({ type: 'log', msg: '[1/3] Engine Iniciada. Usando Módulos Estáticos...', lvl: 'info' });
                         postMessage({ type: 'log', msg: '[2/3] Baixando modelo Qwen1.5 (Pode levar minutos na 1ª vez)...', lvl: 'warn' });
-                        textGenerator = await tf.pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
+                        
+                        textGenerator = await pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
                             progress_callback: (x) => postMessage({ type: 'download_progress', data: x })
                         });
                         
@@ -373,7 +373,7 @@
                         postMessage({ type: 'ready' });
                     } catch (error) {
                         postMessage({ type: 'log', msg: 'FALHA DE INIT: ' + (error.message || error), lvl: 'error' });
-                        postMessage({ type: 'error', msg: error.message || "Erro de segurança CORS ou Rede" });
+                        postMessage({ type: 'error', msg: error.message || "Erro de carregamento" });
                     }
                 }
                 
@@ -469,12 +469,11 @@
 
                 try {
                     const blob = new Blob([workerCode], { type: 'application/javascript' });
-                    // GAMA IA v13: Agora usamos { type: 'module' } por segurança, aliado 
-                    // ao await import() de dentro do worker para suportar todos os browsers.
+                    // A MÁGICA QUE FUNCIONA NO SEU NAVEGADOR ESTÁ AQUI: Worker Module Estrito
                     this.worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
                     
                     this.worker.onerror = (err) => {
-                        this.ui.log("ERRO FATAL NO WORKER: A configuração da sua rede ou navegador bloqueou o arquivo Web Worker local.", "error");
+                        this.ui.log("ERRO FATAL NO WORKER: " + err.message, "error");
                         this.ui.updateStatus("ERRO DE AMBIENTE", "error");
                         this.ui.els.btnInit.innerText = "[ BLOQUEADO ]";
                     };
