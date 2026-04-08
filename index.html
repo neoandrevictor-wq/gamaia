@@ -36,17 +36,6 @@
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
 
-        .scanlines::before {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-            z-index: 50;
-            background-size: 100% 3px;
-            pointer-events: none;
-        }
-
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #3b0764; border-radius: 2px; }
@@ -123,7 +112,7 @@
         input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col scanlines relative">
+<body class="h-screen w-screen flex flex-col relative">
 
     <header class="h-16 glass-panel border-b border-t-0 border-x-0 flex items-center justify-between px-6 z-10 shrink-0">
         <div class="flex items-center gap-3">
@@ -228,7 +217,6 @@
             addMessage(role, content, extraParams = {}) {
                 const session = this.getCurrentSession();
                 if(session.messages.length === 0 && role === 'user') {
-                    // Limpa prefixos de imagem para o título
                     let titleText = content.replace(/^\/imagine\s+/i, '');
                     session.title = titleText.substring(0, 30) + "...";
                 }
@@ -239,7 +227,6 @@
             getSlidingWindow(max = 4) {
                 const session = this.getCurrentSession();
                 if(!session || session.messages.length === 0) return [];
-                // Filtra apenas mensagens de texto para o contexto do LLM
                 return session.messages
                     .filter(m => m.type !== 'image')
                     .slice(-max)
@@ -359,7 +346,6 @@
                 this.els.chat.appendChild(div);
             }
 
-            // UI para geração de TEXTO (Agentic)
             createTextStreamNode() {
                 const div = document.createElement('div');
                 div.className = "flex justify-start w-full";
@@ -408,7 +394,6 @@
                 };
             }
 
-            // UI para geração de IMAGEM (Visual Synthesis)
             createImageGenerationNode() {
                 const div = document.createElement('div');
                 div.className = "flex justify-start w-full";
@@ -450,7 +435,6 @@
                 this.refs = { mode: 'image', accordion, thinkContent: accordion.querySelector('.think-content'), imageContainer, monitor, pbName: monitor.querySelector('.phase-name'), pbEta: monitor.querySelector('.phase-eta'), pbFill: monitor.querySelector('.phase-fill') };
             }
 
-            // Metodos compartilhados de progresso
             updatePhaseMonitor(name, step, totalSteps = null) {
                 this.refs.pbName.innerText = totalSteps ? `[${step}/${totalSteps}] ${name}` : `[Fase ${step}] ${name}`;
                 this.refs.pbFill.style.width = `0%`;
@@ -469,7 +453,6 @@
                 this.els.chat.scrollTop = this.els.chat.scrollHeight;
             }
 
-            // Finaliza Pipeline de Texto
             finishTextPipeline(totalSteps, finalText) {
                 this.refs.monitor.classList.remove('active');
                 this.refs.accordion.querySelector('summary').innerText = `🧠 Cadeia de Raciocínio Concluída (${totalSteps} Fases)`;
@@ -495,7 +478,6 @@
                 requestAnimationFrame(type);
             }
 
-            // Finaliza Pipeline de Imagem (Pixel Decode)
             decodePixelEffect(imageUrl, seed) {
                 this.updatePhaseMonitor("Transferindo Pixels e Upscaling", 4);
                 this.refs.accordion.querySelector('summary').innerText = `⚡ Decodificação VAE Final (Seed: ${seed})`;
@@ -596,17 +578,17 @@
         }
 
         // ==========================================
-        // HYBRID WORKER SCRIPT
+        // HYBRID WORKER SCRIPT (Usando importScripts para rodar via file://)
         // ==========================================
         const workerCode = `
-            import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
+            importScripts('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js');
             
+            const { pipeline, env } = transformers;
             env.allowLocalModels = false;
             env.useBrowserCache = true;
 
             let textGenerator;
 
-            // Auxiliares de Texto
             function extractResponse(out) {
                 const text = Array.isArray(out[0].generated_text) 
                     ? out[0].generated_text[out[0].generated_text.length - 1].content 
@@ -654,14 +636,18 @@
                 const { action, payload } = e.data;
                 
                 if(action === 'INIT') {
-                    postMessage({ type: 'log', msg: 'Baixando/Carregando Tensores Principais...', lvl: 'info' });
-                    textGenerator = await pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
-                        progress_callback: (x) => postMessage({ type: 'download_progress', data: x })
-                    });
-                    postMessage({ type: 'ready' });
+                    try {
+                        postMessage({ type: 'log', msg: 'Baixando/Carregando Tensores Principais...', lvl: 'info' });
+                        textGenerator = await pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
+                            progress_callback: (x) => postMessage({ type: 'download_progress', data: x })
+                        });
+                        postMessage({ type: 'ready' });
+                    } catch (error) {
+                        postMessage({ type: 'log', msg: 'Erro Fatal ao carregar modelo: ' + error.message, lvl: 'error' });
+                        postMessage({ type: 'error', msg: error.message });
+                    }
                 }
                 
-                // MODO TEXTO (Agentic RAG)
                 if(action === 'INFER_TEXT') {
                     try {
                         const { history, prompt, reasoningLevel } = payload;
@@ -673,13 +659,11 @@
                         const totalSteps = N + 1;
                         let lastThought = "";
 
-                        // Fase 1
                         let msgFase1 = [{ role: 'system', content: baseSystem + " Escreva seu raciocínio lógico inicial sobre a pergunta. Não dê a resposta final." }, ...conversation, { role: 'user', content: prompt }];
                         lastThought = await runTextPhase(msgFase1, 100, "Dedução Inicial", 1, totalSteps);
                         postMessage({ type: 'thought_step', title: 'Fase 1: Raciocínio Lógico Básico', text: lastThought });
                         thoughtsBuffer.push(lastThought);
 
-                        // Fase 2 (RAG)
                         if (N >= 2) {
                             postMessage({ type: 'phase_start', name: "Validação Externa (Wikipedia)", step: 2, totalSteps });
                             postMessage({ type: 'phase_progress', percent: 30, msg: "1.5" });
@@ -692,7 +676,6 @@
                             postMessage({ type: 'phase_progress', percent: 100, msg: "0.0" });
                         }
 
-                        // Fases 3 ao N
                         for(let i = 3; i <= N; i++) {
                             let msgFaseCritica = [{ role: 'system', content: baseSystem }, { role: 'user', content: prompt }, { role: 'assistant', content: "Pensamento atual: " + lastThought }, { role: 'user', content: "Faça uma auto-correção do seu pensamento para evitar alucinações e refinar os fatos." }];
                             lastThought = await runTextPhase(msgFaseCritica, 120, "Refinamento e Autocrítica", i, totalSteps);
@@ -700,7 +683,6 @@
                             thoughtsBuffer.push(lastThought);
                         }
 
-                        // Síntese
                         let msgFinal = [{ role: 'system', content: baseSystem }, { role: 'user', content: prompt }, { role: 'assistant', content: "Análises: " + lastThought }, { role: 'user', content: "Dê a resposta final definitiva, clara e direta para minha requisição inicial baseada nas análises." }];
                         const finalAnswer = await runTextPhase(msgFinal, 250, "Síntese Final", totalSteps, totalSteps);
 
@@ -708,7 +690,6 @@
                     } catch(err) { postMessage({ type: 'inference_complete', text: "Erro na pipeline: " + err.message, thoughts: [] }); }
                 }
 
-                // MODO IMAGEM (Visual Synthesis)
                 if(action === 'INFER_IMAGE') {
                     try {
                         const { prompt } = payload;
@@ -734,7 +715,6 @@
 
                         postMessage({ type: 'phase_start', name: "VAE Buffer Fetching", step: 3 });
                         
-                        // Formata o prompt de imagem limpo
                         let cleanPrompt = prompt.replace(/^\/imagine\s+/i, '').replace(/ger[ea]r? (uma )?imagem (de )?/i, '').replace(/desenh[ea]r? (um )?/i, '');
                         const finalPrompt = cleanPrompt + ", masterpiece, highly detailed, 8k";
                         const imageUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(finalPrompt) + '?width=1024&height=1024&nologo=true&seed=' + seed;
@@ -807,7 +787,8 @@
                 this.ui.updateStatus("CARREGANDO MODELOS", "processing");
 
                 const blob = new Blob([workerCode], { type: 'application/javascript' });
-                this.worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
+                // Removido { type: 'module' } para evitar bloqueio CORS local (file://)
+                this.worker = new Worker(URL.createObjectURL(blob));
 
                 this.worker.onmessage = (e) => this.handleWorker(e.data);
                 this.worker.postMessage({ action: 'INIT' });
@@ -828,6 +809,11 @@
                         this.ui.updateStatus("ONLINE", "ready");
                         this.ui.unlock();
                         break;
+                    case 'error':
+                        this.ui.updateStatus("FALHA CRÍTICA", "error");
+                        this.ui.els.btnInit.innerText = "[ ERRO: VERIFIQUE O LOG ]";
+                        this.ui.els.btnInit.disabled = false;
+                        break;
                     case 'phase_start':
                         this.ui.updatePhaseMonitor(data.name, data.step, data.totalSteps);
                         break;
@@ -837,24 +823,18 @@
                     case 'thought_step':
                         this.ui.appendThoughtStep(data.title, data.text);
                         break;
-                    
-                    // Finalização TEXTO
                     case 'inference_complete':
                         this.mem.addMessage('assistant', data.text, { type: 'text', thoughts: data.thoughts });
                         this.ui.renderHistoryList(this.mem.sessions, this.mem.currentSessionId, (newId) => this.loadSession(newId));
                         this.ui.finishTextPipeline(data.thoughts.length, data.text);
                         break;
-                    
-                    // Finalização IMAGEM
                     case 'image_complete':
                         this.ui.log("Buffer da imagem recebido. Decodificando VAE...", "success");
                         this.ui.updateStatus("RENDERIZANDO", "processing");
-                        
                         this.mem.addMessage('assistant', "[Imagem Gerada]", { 
                             type: 'image', imageUrl: data.image, seed: data.seed, prompt: data.prompt, thoughts: data.thoughts 
                         });
                         this.ui.renderHistoryList(this.mem.sessions, this.mem.currentSessionId, (newId) => this.loadSession(newId));
-                        
                         this.ui.decodePixelEffect(data.image, data.seed);
                         break;
                 }
@@ -874,7 +854,6 @@
                 this.ui.renderHistoryList(this.mem.sessions, this.mem.currentSessionId, (newId) => this.loadSession(newId));
                 this.ui.appendUserMsg(text);
 
-                // DETECTOR DE INTENÇÃO (Texto ou Imagem?)
                 const isImageRequest = /^\/imagine|ger[ea]r? (uma )?imagem|desenh[ea]r?|cri[ea]r? (uma )?imagem|fa[çc]a (uma )?imagem/i.test(text);
 
                 if (isImageRequest) {
