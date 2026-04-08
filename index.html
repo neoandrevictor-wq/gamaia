@@ -306,8 +306,17 @@
         }
 
         const workerCode = `
+            self.addEventListener('error', (err) => {
+                postMessage({ type: 'log', msg: 'Erro Crítico no Worker: ' + err.message, lvl: 'error' });
+            });
+
+            try {
+                importScripts('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js');
+            } catch(e) {
+                postMessage({ type: 'log', msg: 'Falha ao baixar script da IA. Verifique AdBlock ou conexão.', lvl: 'error' });
+            }
+
             let textGenerator;
-            let transformers;
 
             function extractResponse(out) {
                 const text = Array.isArray(out[0].generated_text) ? out[0].generated_text[out[0].generated_text.length - 1].content : String(out[0].generated_text).split('<|im_start|>assistant').pop().replace('<|im_end|>', '');
@@ -350,19 +359,21 @@
                 
                 if(action === 'INIT') {
                     try {
-                        postMessage({ type: 'log', msg: '[1/4] Worker Boot. Baixando Transformers.js...', lvl: 'info' });
-                        transformers = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1');
-                        postMessage({ type: 'log', msg: '[2/4] Bibliotecas carregadas. Ajustando ambiente...', lvl: 'success' });
+                        postMessage({ type: 'log', msg: '[1/3] Engine Iniciada. Preparando tensores...', lvl: 'info' });
                         
-                        transformers.env.allowLocalModels = false;
-                        transformers.env.useBrowserCache = true;
+                        if(!self.transformers) {
+                            throw new Error("Biblioteca de IA não importada. Bloqueio de rede provável.");
+                        }
+
+                        self.transformers.env.allowLocalModels = false;
+                        self.transformers.env.useBrowserCache = true;
                         
-                        postMessage({ type: 'log', msg: '[3/4] Requisitando pipeline Qwen1.5 (Aguarde o download)...', lvl: 'warn' });
-                        textGenerator = await transformers.pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
+                        postMessage({ type: 'log', msg: '[2/3] Baixando modelo Qwen1.5 (Pode levar minutos na 1ª vez)...', lvl: 'warn' });
+                        textGenerator = await self.transformers.pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
                             progress_callback: (x) => postMessage({ type: 'download_progress', data: x })
                         });
                         
-                        postMessage({ type: 'log', msg: '[4/4] Tensor Core Inicializado com Sucesso!', lvl: 'success' });
+                        postMessage({ type: 'log', msg: '[3/3] Tensor Core Pronto na Memória!', lvl: 'success' });
                         postMessage({ type: 'ready' });
                     } catch (error) {
                         postMessage({ type: 'log', msg: 'FALHA DE INIT: ' + error.message, lvl: 'error' });
@@ -457,24 +468,24 @@
                 this.ui.renderHistoryList(this.mem.sessions, id, (newId) => this.loadSession(newId)); this.ui.renderPastMessages(session.messages);
             }
             boot() {
-                this.ui.els.btnInit.disabled = true; this.ui.els.btnInit.innerText = "VERIFICANDO DEPENDÊNCIAS...";
-                this.ui.updateStatus("INICIANDO", "processing");
+                this.ui.els.btnInit.disabled = true; this.ui.els.btnInit.innerText = "ALOCANDO ENGINE...";
+                this.ui.updateStatus("CARREGANDO", "processing");
 
                 try {
                     const blob = new Blob([workerCode], { type: 'application/javascript' });
-                    this.worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
+                    // Criação Clássica do Worker (Garante que rode em qualquer ambiente sem flag de module CORS)
+                    this.worker = new Worker(URL.createObjectURL(blob));
                     
                     this.worker.onerror = (err) => {
-                        this.ui.log("FALHA DO NAVEGADOR: O Worker crashou inesperadamente.", "error");
-                        this.ui.updateStatus("ERRO CRÍTICO", "error");
-                        this.ui.els.btnInit.innerText = "[ NAVEGADOR BLOQUEOU O WORKER ]";
+                        this.ui.log("O NAVEGADOR BLOQUEOU O WORKER. Tente usar no Chrome ou Edge.", "error");
+                        this.ui.updateStatus("ERRO DE NAVEGADOR", "error");
+                        this.ui.els.btnInit.innerText = "[ BLOQUEADO ]";
                     };
 
                     this.worker.onmessage = (e) => this.handleWorker(e.data);
                     this.worker.postMessage({ action: 'INIT' });
                 } catch(e) {
-                    this.ui.log("Erro ao criar processo do Worker: " + e.message, "error");
-                    this.ui.updateStatus("FALHA", "error");
+                    this.ui.log("Erro fatal ao invocar Blob Worker: " + e.message, "error");
                 }
             }
             handleWorker(data) {
@@ -488,7 +499,7 @@
                         }
                         break;
                     case 'ready': this.ui.updateStatus("ONLINE", "ready"); this.ui.unlock(); break;
-                    case 'error': this.ui.updateStatus("FALHA DE INIT", "error"); this.ui.els.btnInit.innerText = "[ VEJA LOGS DE ERRO ]"; break;
+                    case 'error': this.ui.updateStatus("FALHA DE INIT", "error"); this.ui.els.btnInit.innerText = "[ ERRO: VEJA LOG ]"; break;
                     case 'phase_start': this.ui.updatePhaseMonitor(data.name, data.step, data.totalSteps); break;
                     case 'phase_progress': this.ui.updatePhaseProgress(data.percent, data.msg); break;
                     case 'thought_step': this.ui.appendThoughtStep(data.title, data.text); break;
