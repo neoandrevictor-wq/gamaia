@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GAMA IA // Agentic RAG Multi-Step</title>
+    <title>GAMA IA // Unified Omni-Engine</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -11,10 +11,17 @@
     <style>
         :root {
             --bg-dark: #050505;
-            --accent-purple: #8b5cf6;
-            --accent-green: #10b981;
-            --accent-blue: #3b82f6;
-            --glass-border: rgba(139, 92, 246, 0.2);
+            /* Cores Modo Visual */
+            --img-cyan: #06b6d4;
+            --img-pink: #ec4899;
+            /* Cores Modo Agente */
+            --txt-purple: #8b5cf6;
+            --txt-blue: #3b82f6;
+            
+            /* Cor ativa controlada via JS */
+            --active-primary: var(--img-cyan);
+            --active-secondary: var(--img-pink);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
 
         body {
@@ -22,54 +29,41 @@
             color: #e2e8f0;
             font-family: 'Inter', sans-serif;
             overflow: hidden;
+            background-image: radial-gradient(circle at 50% 0%, #0a0f18 0%, #050505 80%);
+            transition: background-image 0.5s ease;
+        }
+
+        body.mode-agentic {
             background-image: radial-gradient(circle at 50% 0%, #1a1025 0%, #050505 80%);
         }
 
         .font-mono { font-family: 'JetBrains Mono', monospace; }
 
         .glass-panel {
-            background: rgba(15, 10, 25, 0.7);
+            background: rgba(10, 15, 25, 0.7);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
 
-        .scanlines::before {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-            z-index: 50;
-            background-size: 100% 3px;
-            pointer-events: none;
-        }
-
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #3b0764; border-radius: 2px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--active-primary); }
 
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
         .cursor-blink { animation: blink 1s step-end infinite; }
         
         @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 5px var(--accent-purple); }
-            50% { box-shadow: 0 0 20px var(--accent-purple); }
+            0%, 100% { box-shadow: 0 0 5px var(--active-primary); }
+            50% { box-shadow: 0 0 20px var(--active-primary); }
         }
         .glow-active { animation: pulse-glow 2s infinite; }
 
-        .loader-bar {
-            height: 2px;
-            background: var(--accent-purple);
-            width: 0%;
-            transition: width 0.1s linear;
-        }
-
         /* Acordeão Nativo de Pensamento */
         details.think-box {
-            border-left: 2px solid #6b7280;
+            border-left: 2px solid var(--active-primary);
             background: rgba(17, 24, 39, 0.6);
             border-radius: 4px;
             margin-bottom: 12px;
@@ -104,95 +98,127 @@
         }
 
         .think-step-title {
-            color: #8b5cf6;
+            color: var(--active-secondary);
             font-weight: bold;
             margin-top: 12px;
             margin-bottom: 4px;
             display: block;
-            border-bottom: 1px dashed rgba(139, 92, 246, 0.3);
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
             padding-bottom: 2px;
         }
         .think-step-title:first-child { margin-top: 0; }
         
-        /* Estilos do ETA e Progress */
+        /* Monitor e Progresso */
         .phase-monitor {
             background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(139, 92, 246, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 4px;
             padding: 8px;
-            margin-top: 8px;
+            margin-top: 8px; margin-bottom: 12px;
             display: none;
         }
         .phase-monitor.active { display: block; }
+
+        /* Canvas Efeito Imagem */
+        canvas.pixel-decode {
+            image-rendering: -moz-crisp-edges;
+            image-rendering: pixelated;
+        }
+        
+        .history-item { cursor: pointer; transition: all 0.2s; }
+        .history-item:hover { background: rgba(255, 255, 255, 0.05); padding-left: 0.5rem; border-left: 2px solid var(--active-primary); }
+
+        .image-skeleton {
+            width: 100%; height: 300px;
+            background: linear-gradient(90deg, #111827 25%, #1f2937 50%, #111827 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 0.5rem; border: 1px dashed #374151;
+            display: flex; align-items: center; justify-content: center;
+        }
+        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Tab switchers */
+        .mode-btn { opacity: 0.5; transition: all 0.3s; }
+        .mode-btn.active { opacity: 1; transform: scale(1.05); text-shadow: 0 0 10px currentColor; }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col scanlines relative">
+<body class="h-screen w-screen flex flex-col relative mode-visual" id="app-body">
 
     <header class="h-16 glass-panel border-b border-t-0 border-x-0 flex items-center justify-between px-6 z-10 shrink-0">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-4">
             <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_red]" id="status-indicator"></div>
-            <h1 class="text-2xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
-                GAMA IA <span class="text-sm font-mono text-gray-500 font-normal">v11.0 [AGENTIC_PIPELINE]</span>
+            <h1 class="text-xl font-extrabold tracking-widest text-white">
+                GAMA <span class="font-light">OMNI</span>
             </h1>
+            
+            <!-- Seletor de Modo -->
+            <div class="ml-6 flex bg-black/50 rounded-lg p-1 border border-gray-800">
+                <button id="tab-visual" class="mode-btn active px-4 py-1 text-xs font-mono text-cyan-400 font-bold rounded">VISUAL SYNTH</button>
+                <button id="tab-agentic" class="mode-btn px-4 py-1 text-xs font-mono text-purple-400 font-bold rounded">AGENTIC RAG</button>
+            </div>
         </div>
-        <div class="font-mono text-xs text-gray-400 flex gap-4">
+        
+        <div class="font-mono text-xs text-gray-400 flex gap-4 items-center">
+            <div id="vram-status" class="text-cyan-400">VRAM: 24GB</div>
             <div>STATUS: <span id="system-status" class="text-red-400">OFFLINE</span></div>
         </div>
     </header>
 
     <main class="flex-1 flex overflow-hidden z-10">
+        <!-- Sidebar -->
         <aside class="w-80 glass-panel border-r border-t-0 border-b-0 border-l-0 hidden lg:flex flex-col p-4 gap-4">
-            <div class="flex-1 flex flex-col min-h-0 overflow-hidden border-b border-purple-500/20 pb-4">
-                <div class="flex justify-between items-center mb-2 border-b border-purple-500/30 pb-1">
-                    <h2 class="font-mono text-xs text-purple-500">MEMÓRIA NEURAL</h2>
-                    <button id="btn-new-chat" class="text-[10px] font-mono bg-purple-900/40 hover:bg-purple-600/60 text-purple-300 px-2 py-1 rounded transition-all">+ NOVO</button>
+            <div class="flex-1 flex flex-col min-h-0 overflow-hidden border-b border-gray-700/50 pb-4">
+                <div class="flex justify-between items-center mb-2 border-b border-gray-700 pb-1">
+                    <h2 id="sidebar-title" class="font-mono text-xs text-cyan-500 font-bold">GALERIA VISUAL</h2>
+                    <button id="btn-new-chat" class="text-[10px] font-mono bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 rounded transition-all">+ NOVO</button>
                 </div>
-                <div id="history-list" class="flex-1 overflow-y-auto font-mono text-xs text-gray-400 space-y-1 pr-1"></div>
+                <div id="history-list" class="flex-1 overflow-y-auto font-mono text-xs text-gray-400 space-y-2 pr-1 mt-2"></div>
             </div>
 
             <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
-                <h2 class="font-mono text-xs text-purple-500 mb-2 border-b border-purple-500/30 pb-1">KERNEL LOGS</h2>
+                <h2 class="font-mono text-xs text-gray-500 mb-2 border-b border-gray-700 pb-1">OMNI KERNEL LOGS</h2>
                 <div id="console-output" class="flex-1 font-mono text-[10px] text-gray-400 overflow-y-auto break-all space-y-1"></div>
                 
                 <div class="mt-4 pt-4 border-t border-gray-800 shrink-0">
-                    <p class="font-mono text-xs text-gray-500 mb-1">DOWNLOAD DOS TENSORES</p>
-                    <div class="w-full bg-gray-900 h-2 rounded overflow-hidden">
-                        <div id="download-progress" class="bg-purple-500 h-full w-0 transition-all duration-300"></div>
+                    <div class="flex justify-between font-mono text-[10px] text-gray-500 mb-1">
+                        <span id="dl-title">NETWORK WEIGHTS</span>
+                        <span id="download-stats">0.0 MB</span>
                     </div>
-                    <p id="download-stats" class="font-mono text-[10px] text-right mt-1 text-gray-500">Aguardando init...</p>
+                    <div class="w-full bg-gray-900 h-1.5 rounded overflow-hidden">
+                        <div id="download-progress" class="bg-white h-full w-0 transition-all duration-300"></div>
+                    </div>
                 </div>
             </div>
         </aside>
 
+        <!-- Main Chat Area -->
         <section class="flex-1 flex flex-col relative overflow-hidden">
-            <div id="boot-screen" class="absolute inset-0 z-30 flex items-center justify-center bg-[#050505]/80 backdrop-blur-md transition-opacity duration-500">
-                <div class="glass-panel p-8 max-w-lg w-[90%] rounded-xl border-l-2 border-l-purple-500 flex flex-col gap-5 relative overflow-hidden">
-                    <div class="flex items-center gap-3 border-b border-purple-500/20 pb-3 z-10">
+            <!-- Boot Screen -->
+            <div id="boot-screen" class="absolute inset-0 z-30 flex items-center justify-center bg-[#050505]/90 backdrop-blur-md transition-opacity duration-500">
+                <div class="glass-panel p-8 max-w-lg w-[90%] rounded-xl border-l-2 border-l-white flex flex-col gap-5 relative overflow-hidden" id="boot-card">
+                    <div class="flex items-center gap-3 border-b border-gray-700 pb-3 z-10">
                         <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_red] cursor-blink"></div>
-                        <h2 class="font-mono text-sm text-purple-400 tracking-widest font-bold">GAMA KERNEL // STANDBY</h2>
+                        <h2 class="font-mono text-sm text-white tracking-widest font-bold">CLUSTER DE INFERÊNCIA // STANDBY</h2>
                     </div>
                     
-                    <div class="text-gray-300 text-sm leading-relaxed font-mono z-10 space-y-2">
-                        <p class="text-blue-400 font-bold">> NOVO: Pipeline Autônomo de 4 Fases (Agentic RAG)</p>
-                        <ul class="text-[11px] text-gray-400 space-y-1 ml-2 border-l border-gray-700 pl-2">
-                            <li>[Fase 1] Geração de Lógica Inicial</li>
-                            <li>[Fase 2] Busca Dinâmica e Checagem na Wikipedia</li>
-                            <li>[Fase 3] Loop Interno de Autocrítica</li>
-                            <li>[Fase 4] Síntese da Resposta Final</li>
-                        </ul>
+                    <div class="text-gray-300 text-sm leading-relaxed font-mono z-10 space-y-2" id="boot-desc">
+                        <!-- Conteúdo injetado pelo JS -->
                     </div>
                     
-                    <button id="btn-init" class="mt-2 w-full px-6 py-4 bg-purple-900/40 hover:bg-purple-600/60 border border-purple-500/50 text-purple-300 font-mono text-sm rounded transition-all z-10">
-                        [ INICIAR INFERÊNCIA MULTI-STEP ]
+                    <button id="btn-init" class="mt-2 w-full px-6 py-4 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-mono text-sm rounded transition-all z-10 font-bold tracking-wider">
+                        [ ATIVAR OMNI KERNEL ]
                     </button>
                 </div>
             </div>
 
+            <!-- Chat Container -->
             <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-6 pb-24 z-10"></div>
 
+            <!-- Input Area -->
             <div class="h-24 glass-panel border-t border-b-0 border-x-0 p-4 absolute bottom-0 w-full flex gap-3 items-center z-20">
-                <input type="text" id="user-input" disabled class="flex-1 h-full bg-black/60 border border-gray-700 rounded-lg px-4 font-mono text-sm text-white focus:outline-none focus:border-purple-500 transition-all disabled:opacity-50" placeholder="Aguardando inicialização da Engine..." autocomplete="off">
-                <button id="btn-send" disabled class="px-6 py-3 h-full bg-purple-600 hover:bg-purple-500 disabled:bg-gray-800 disabled:text-gray-500 text-white font-bold rounded transition-all">
+                <input type="text" id="user-input" disabled class="flex-1 h-full bg-black/60 border border-gray-700 rounded-lg px-4 font-mono text-sm text-white focus:outline-none transition-all disabled:opacity-50" autocomplete="off">
+                <button id="btn-send" disabled class="px-6 py-3 h-full bg-gray-700 disabled:bg-gray-900 disabled:text-gray-600 text-white font-bold rounded transition-all">
                     PROCESSAR
                 </button>
             </div>
@@ -200,415 +226,469 @@
     </main>
 
     <script type="module">
-        class MemoryEngine {
-            constructor() {
-                this.dbKey = 'gama_ia_sessions';
-                this.sessions = this.loadAll();
-                this.currentSessionId = null;
-            }
-            loadAll() { return JSON.parse(localStorage.getItem(this.dbKey)) || []; }
-            saveAll() { localStorage.setItem(this.dbKey, JSON.stringify(this.sessions)); }
-            createSession() {
-                const id = 'sess_' + Date.now();
-                const session = { id, title: 'Nova Sessão Neural', messages: [], updatedAt: Date.now() };
-                this.sessions.unshift(session);
-                this.currentSessionId = id;
-                this.saveAll();
-                return session;
-            }
-            getCurrentSession() {
-                if (!this.currentSessionId && this.sessions.length > 0) this.currentSessionId = this.sessions[0].id;
-                else if (!this.currentSessionId) this.createSession();
-                return this.sessions.find(s => s.id === this.currentSessionId);
-            }
-            addMessage(role, content, thoughts = []) {
-                const session = this.getCurrentSession();
-                if(session.messages.length === 0 && role === 'user') session.title = content.substring(0, 30) + "...";
-                session.messages.push({ role, content, thoughts, timestamp: new Date().toISOString() });
-                session.updatedAt = Date.now();
-                this.saveAll();
-            }
-            getSlidingWindow(max = 4) {
-                const session = this.getCurrentSession();
-                if(!session || session.messages.length === 0) return [];
-                return session.messages.slice(-max).map(m => ({ role: m.role, content: m.content }));
-            }
-        }
-
-        class UIEngine {
-            constructor() {
-                this.els = {
-                    console: document.getElementById('console-output'),
-                    chat: document.getElementById('chat-container'),
-                    input: document.getElementById('user-input'),
-                    btnSend: document.getElementById('btn-send'),
-                    btnInit: document.getElementById('btn-init'),
-                    bootScreen: document.getElementById('boot-screen'),
-                    btnNewChat: document.getElementById('btn-new-chat'),
-                    historyList: document.getElementById('history-list'),
-                    status: document.getElementById('system-status'),
-                    indicator: document.getElementById('status-indicator'),
-                    dlProgress: document.getElementById('download-progress'),
-                    dlStats: document.getElementById('download-stats')
-                };
-                this.refs = { accordion: null, thinkContent: null, textNode: null, cursor: null, monitor: null, pbFill: null, pbName: null, pbEta: null };
-            }
-
-            log(msg, type = 'info') {
-                const colors = { info: 'text-gray-400', success: 'text-green-400', warn: 'text-yellow-400', error: 'text-red-500', phase: 'text-blue-400' };
-                const el = document.createElement('div');
-                el.className = colors[type];
-                el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}`;
-                this.els.console.appendChild(el);
-                this.els.console.scrollTop = this.els.console.scrollHeight;
-            }
-
-            updateStatus(text, state) {
-                this.els.status.innerText = text;
-                this.els.indicator.className = `w-3 h-3 rounded-full shadow-[0_0_10px_currentColor] ${
-                    state === 'ready' ? 'bg-green-500 text-green-500' : 
-                    state === 'processing' ? 'bg-purple-500 text-purple-500 glow-active' : 'bg-red-500 text-red-500'
-                }`;
-            }
-
-            updateDownload(loaded, total) {
-                if(total === 0) return;
-                const percent = (loaded / total) * 100;
-                this.els.dlProgress.style.width = `${percent}%`;
-                this.els.dlStats.innerText = `${(loaded/1024/1024).toFixed(1)} MB / ${(total/1024/1024).toFixed(1)} MB`;
-            }
-
-            unlock() {
-                this.els.input.disabled = false;
-                this.els.btnSend.disabled = false;
-                this.els.input.placeholder = "Digite o prompt para a cadeia de 4 fases...";
-                this.els.input.focus();
-                if(this.els.bootScreen) {
-                    this.els.bootScreen.style.opacity = '0';
-                    setTimeout(() => this.els.bootScreen.remove(), 500);
+        // ==========================================
+        // WORKER SCRIPT: IMAGEM
+        // ==========================================
+        const imageWorkerCode = `
+            self.onmessage = async (e) => {
+                const { action, payload } = e.data;
+                if(action === 'INIT') {
+                    for(let i=1; i<=100; i+=10) { postMessage({ type: 'progress', percent: i }); await new Promise(r => setTimeout(r, 20)); }
+                    postMessage({ type: 'ready' });
                 }
-            }
+                if(action === 'INFER') {
+                    try {
+                        const { prompt } = payload;
+                        const seed = Math.floor(Math.random() * 99999999);
+                        postMessage({ type: 'phase_start', name: "CLIP Token Extraction", step: 1 });
+                        postMessage({ type: 'thought', title: 'Fase 1: Pre-processamento', text: "Analisando prompt: '" + prompt + "'\\nExtraindo vetores do texto..." });
+                        await new Promise(r => setTimeout(r, 600));
 
-            appendUserMsg(text) {
-                const div = document.createElement('div');
-                div.className = "flex justify-end";
-                div.innerHTML = `
-                    <div class="glass-panel p-4 max-w-[80%] rounded-tl-xl rounded-br-xl rounded-bl-xl border-r-2 border-r-gray-400 bg-gray-900/50">
-                        <div class="mb-1"><span class="font-mono text-[10px] text-gray-400">USUÁRIO</span></div>
-                        <p class="text-gray-100 text-sm whitespace-pre-wrap">${this.escapeHTML(text)}</p>
-                    </div>`;
-                this.els.chat.appendChild(div);
-                this.els.chat.scrollTop = this.els.chat.scrollHeight;
-            }
+                        postMessage({ type: 'phase_start', name: "Latent Space Denoising", step: 2 });
+                        postMessage({ type: 'thought', title: 'Fase 2: Geração Latente', text: "Inicializando Tensor com SEED: " + seed + "\\nEscala CFG: 7.5\\nIniciando loop..." });
+                        for(let step = 1; step <= 20; step++) {
+                            postMessage({ type: 'phase_prog', percent: (step/20)*100, msg: 'Step ' + step + '/20' });
+                            await new Promise(r => setTimeout(r, 60)); 
+                        }
 
-            // Inicia o nó de resposta da IA em branco (preparado para Stream e Progresso)
-            createAIStreamNode() {
-                const div = document.createElement('div');
-                div.className = "flex justify-start w-full";
-                
-                const innerDiv = document.createElement('div');
-                innerDiv.className = "glass-panel p-4 max-w-[85%] rounded-tr-xl rounded-br-xl rounded-bl-xl border-l-2 border-l-purple-500 shadow-[0_0_15px_rgba(139,92,246,0.2)] flex flex-col gap-2 w-full";
-                
-                innerDiv.innerHTML = `<div class="flex items-center gap-2 mb-1"><span class="font-mono text-[10px] text-purple-400">GAMA IA // AGENTIC RAG</span></div>`;
-                
-                // Acordeão de Pensamento
-                const accordion = document.createElement('details');
-                accordion.className = "think-box";
-                accordion.open = true;
-                accordion.innerHTML = `<summary>🧠 Inicializando Pipeline...</summary><div class="think-content"></div>`;
-                
-                // Monitor de Progresso das Fases (Fica dentro do painel principal, acima da resposta final)
-                const monitor = document.createElement('div');
-                monitor.className = "phase-monitor active";
-                monitor.innerHTML = `
-                    <div class="flex justify-between font-mono text-[10px] text-blue-300 mb-1">
-                        <span class="phase-name">Preparando Tópicos...</span>
-                        <span class="phase-eta text-yellow-400">ETA: Calculando...</span>
-                    </div>
-                    <div class="w-full bg-black h-1 rounded overflow-hidden">
-                        <div class="phase-fill bg-blue-500 h-full w-0 transition-all duration-200"></div>
-                    </div>
-                `;
-
-                // Wrapper de Texto da Resposta Final
-                const textWrapper = document.createElement('div');
-                const textNode = document.createElement('p');
-                textNode.className = "text-gray-200 text-sm leading-relaxed whitespace-pre-wrap inline";
-                const cursor = document.createElement('span');
-                cursor.className = "inline-block w-2 h-4 bg-purple-400 cursor-blink align-middle ml-1 hidden";
-                textWrapper.appendChild(textNode);
-                textWrapper.appendChild(cursor);
-
-                innerDiv.appendChild(accordion);
-                innerDiv.appendChild(monitor);
-                innerDiv.appendChild(textWrapper);
-                div.appendChild(innerDiv);
-                
-                this.els.chat.appendChild(div);
-                this.els.chat.scrollTop = this.els.chat.scrollHeight;
-                
-                // Guardar referências para atualização via Worker
-                this.refs = {
-                    accordion,
-                    thinkContent: accordion.querySelector('.think-content'),
-                    textNode,
-                    cursor,
-                    monitor,
-                    pbName: monitor.querySelector('.phase-name'),
-                    pbEta: monitor.querySelector('.phase-eta'),
-                    pbFill: monitor.querySelector('.phase-fill')
-                };
-            }
-
-            updatePhaseMonitor(name, step) {
-                this.refs.pbName.innerText = `[${step}/4] ${name}`;
-                this.refs.pbFill.style.width = `0%`;
-                this.refs.pbEta.innerText = "ETA: Calculando...";
-                this.refs.monitor.classList.add('active');
-            }
-
-            updatePhaseProgress(percent, etaSeconds) {
-                this.refs.pbFill.style.width = `${percent}%`;
-                this.refs.pbEta.innerText = `ETA: ${etaSeconds}s`;
-            }
-
-            appendThoughtStep(stepTitle, content) {
-                if(!this.refs.thinkContent) return;
-                const html = `<span class="think-step-title">${stepTitle}</span>${this.escapeHTML(content)}\n\n`;
-                this.refs.thinkContent.insertAdjacentHTML('beforeend', html);
-                this.els.chat.scrollTop = this.els.chat.scrollHeight;
-            }
-
-            finishPipeline(totalSteps, finalText) {
-                this.refs.monitor.classList.remove('active'); // Esconde o monitor de progresso
-                this.refs.accordion.querySelector('summary').innerText = `🧠 Cadeia de Raciocínio Concluída (${totalSteps} Fases)`;
-                this.refs.accordion.open = false; // Fecha o acordeão para focar na resposta
-                this.refs.cursor.classList.remove('hidden'); // Mostra o cursor para a digitação
-                this.streamText(finalText);
-            }
-
-            streamText(text) {
-                let i = 0;
-                const speed = Math.max(1, Math.floor(text.length / 100)); 
-                const type = () => {
-                    if (i < text.length) {
-                        this.refs.textNode.textContent += text.substring(i, i + speed);
-                        i += speed;
-                        this.els.chat.scrollTop = this.els.chat.scrollHeight;
-                        requestAnimationFrame(type);
-                    } else {
-                        this.refs.cursor.remove();
-                        window.GamaApp.finalizeInference();
-                    }
-                };
-                requestAnimationFrame(type);
-            }
-
-            escapeHTML(str) { return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t])); }
-        }
+                        postMessage({ type: 'phase_start', name: "VAE Buffer Download", step: 3 });
+                        const imgUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=1024&height=1024&nologo=true&seed=' + seed;
+                        postMessage({ type: 'thought', title: 'Fase 3: Transferência', text: "Baixando mapa de latentes e preparando matriz..." });
+                        
+                        postMessage({ type: 'complete', image: imgUrl, seed, prompt });
+                    } catch(err) { postMessage({ type: 'error', msg: err.message }); }
+                }
+            };
+        `;
 
         // ==========================================
-        // WORKER SCRIPT (4 FASES COM WIKIPEDIA RAG)
+        // WORKER SCRIPT: TEXTO (RAG)
         // ==========================================
-        const workerCode = `
+        const textWorkerCode = `
             import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
-            
-            env.allowLocalModels = false;
-            env.useBrowserCache = true;
-
+            env.allowLocalModels = false; env.useBrowserCache = true;
             let generator;
 
-            function extractResponse(out) {
-                const text = Array.isArray(out[0].generated_text) 
-                    ? out[0].generated_text[out[0].generated_text.length - 1].content 
-                    : String(out[0].generated_text).split('<|im_start|>assistant').pop().replace('<|im_end|>', '');
-                return text.trim();
-            }
-
-            // Função para RAG dinâmico dentro do Worker
-            async function fetchWikipedia(query) {
+            async function fetchWiki(query) {
                 try {
-                    // Limpa a query para buscar os termos chaves principais
-                    const clean = query.replace(/[?.!]/g, '').split(' ').slice(0, 6).join(' ');
-                    const url = 'https://pt.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(clean) + '&utf8=&format=json&origin=*';
-                    const res = await fetch(url);
+                    const clean = query.replace(/[?.!]/g, '').split(' ').slice(0, 5).join(' ');
+                    const res = await fetch('https://pt.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(clean) + '&utf8=&format=json&origin=*');
                     const data = await res.json();
-                    
                     if(data.query && data.query.search.length > 0) {
-                        const title = data.query.search[0].title;
-                        const extUrl = 'https://pt.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&titles=' + encodeURIComponent(title) + '&format=json&origin=*';
-                        const extRes = await fetch(extUrl);
+                        const extRes = await fetch('https://pt.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&titles=' + encodeURIComponent(data.query.search[0].title) + '&format=json&origin=*');
                         const extData = await extRes.json();
-                        const pageId = Object.keys(extData.query.pages)[0];
-                        return extData.query.pages[pageId].extract.substring(0, 500);
+                        return extData.query.pages[Object.keys(extData.query.pages)[0]].extract.substring(0, 400);
                     }
-                    return "Nenhum dado externo retornado para a pesquisa.";
-                } catch(e) {
-                    return "Falha na conexão com a base de dados.";
-                }
-            }
-
-            // Helper para rodar uma fase com monitoramento de Tokens para o ETA
-            async function runInferencePhase(messages, maxTokens, phaseName, stepNum) {
-                postMessage({ type: 'phase_start', name: phaseName, step: stepNum });
-                
-                let tokens = 0;
-                let start = Date.now();
-                
-                const out = await generator(messages, {
-                    max_new_tokens: maxTokens,
-                    do_sample: false,
-                    repetition_penalty: 1.1,
-                    callback_function: () => {
-                        tokens++;
-                        const elapsedSecs = (Date.now() - start) / 1000;
-                        const tps = tokens / elapsedSecs; // Tokens per second
-                        const remainingTokens = Math.max(0, maxTokens - tokens);
-                        const eta = (remainingTokens / tps).toFixed(1);
-                        const percent = Math.min(100, (tokens / maxTokens) * 100);
-                        
-                        // Atualiza a UI a cada ~3 tokens para não sobrecarregar o postMessage
-                        if(tokens % 3 === 0) {
-                            postMessage({ type: 'phase_progress', percent, eta });
-                        }
-                    }
-                });
-                
-                postMessage({ type: 'phase_progress', percent: 100, eta: "0.0" });
-                return extractResponse(out);
+                    return "Nenhum dado externo encontrado.";
+                } catch(e) { return "Falha de conexão."; }
             }
 
             self.onmessage = async (e) => {
                 const { action, payload } = e.data;
-                
                 if(action === 'INIT') {
-                    postMessage({ type: 'log', msg: 'Baixando/Carregando Tensores...', lvl: 'info' });
                     generator = await pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
-                        progress_callback: (x) => postMessage({ type: 'download_progress', data: x })
+                        progress_callback: (x) => postMessage({ type: 'progress', data: x })
                     });
                     postMessage({ type: 'ready' });
                 }
                 
                 if(action === 'INFER') {
                     try {
-                        const { history, prompt } = payload;
-                        let baseSystem = "Você é uma IA analítica. Responda APENAS em Português do Brasil.";
-                        let conversation = history ? [...history] : [];
-                        let thoughtsBuffer = [];
-
-                        // ---- FASE 1: LÓGICA INICIAL ----
-                        let msgFase1 = [
-                            { role: 'system', content: baseSystem + " INSTRUÇÃO: Escreva apenas seu raciocínio lógico inicial sobre a pergunta do usuário. Não dê a resposta final ainda." },
-                            ...conversation,
-                            { role: 'user', content: prompt }
-                        ];
-                        const thought1 = await runInferencePhase(msgFase1, 100, "Análise e Raciocínio Lógico", 1);
-                        postMessage({ type: 'thought_step', title: 'Fase 1: Dedução Inicial', text: thought1 });
-                        thoughtsBuffer.push(thought1);
-
-                        // ---- FASE 2: WIKIPEDIA RAG DINÂMICO ----
-                        postMessage({ type: 'phase_start', name: "Validação Dinâmica (Wikipedia)", step: 2 });
+                        let thoughts = [];
                         
-                        // Simulando barra de progresso do Fetch (já que não há tokens gerados aqui)
-                        postMessage({ type: 'phase_progress', percent: 30, eta: "1.5" });
-                        const wikiData = await fetchWikipedia(prompt);
-                        postMessage({ type: 'phase_progress', percent: 80, eta: "0.2" });
+                        // Fase 1
+                        postMessage({ type: 'phase_start', name: "Análise Lógica", step: 1 });
+                        const thought1 = "Analisando intenção do usuário para o prompt: '" + payload.prompt + "'";
+                        postMessage({ type: 'thought', title: 'Fase 1: Dedução', text: thought1 });
+                        thoughts.push(thought1);
+
+                        // Fase 2: Wikipedia
+                        postMessage({ type: 'phase_start', name: "Busca Dinâmica (Wiki)", step: 2 });
+                        postMessage({ type: 'phase_prog', percent: 50, msg: "Consultando bases..." });
+                        const wikiData = await fetchWiki(payload.prompt);
+                        const thought2 = "[DADOS RETORNADOS]:\\n" + wikiData;
+                        postMessage({ type: 'thought', title: 'Fase 2: Contexto Externo', text: thought2 });
+                        thoughts.push(thought2);
+                        postMessage({ type: 'phase_prog', percent: 100, msg: "Concluído" });
+
+                        // Fase 3: Inferência Real
+                        postMessage({ type: 'phase_start', name: "Síntese Neural", step: 3 });
+                        let msg = [
+                            { role: 'system', content: "Responda em PT-BR baseado neste contexto: " + wikiData },
+                            { role: 'user', content: payload.prompt }
+                        ];
                         
-                        const thought2 = "Consultando contexto dinâmico via Wikipedia para o termo-chave da requisição...\\n\\n[DADOS RETORNADOS]:\\n" + wikiData;
-                        postMessage({ type: 'thought_step', title: 'Fase 2: Fact-Checking e Contexto Externo', text: thought2 });
-                        thoughtsBuffer.push(thought2);
-                        postMessage({ type: 'phase_progress', percent: 100, eta: "0.0" });
+                        let tokens = 0;
+                        const out = await generator(msg, {
+                            max_new_tokens: 150, do_sample: false,
+                            callback_function: () => {
+                                tokens++;
+                                if(tokens % 5 === 0) postMessage({ type: 'phase_prog', percent: Math.min(100, (tokens/150)*100), msg: \`Gerando tokens: \${tokens}\` });
+                            }
+                        });
+                        
+                        const text = Array.isArray(out[0].generated_text) 
+                            ? out[0].generated_text[out[0].generated_text.length - 1].content 
+                            : String(out[0].generated_text).split('<|im_start|>assistant').pop().replace('<|im_end|>', '');
 
-                        // ---- FASE 3: AUTOCRÍTICA ----
-                        let msgFase3 = [
-                            { role: 'system', content: baseSystem },
-                            { role: 'user', content: prompt },
-                            { role: 'assistant', content: "Meu pensamento inicial: " + thought1 },
-                            { role: 'user', content: "CRÍTICA INTERNA: Leia os dados extraídos da Wikipedia a seguir: '" + wikiData + "'. Revise e corrija o seu pensamento inicial para evitar alucinações. Escreva sua autocrítica apontando o que estava certo e errado." }
-                        ];
-                        const thought3 = await runInferencePhase(msgFase3, 120, "Autocrítica e Alinhamento de Fatos", 3);
-                        postMessage({ type: 'thought_step', title: 'Fase 3: Refinamento e Correção de Alucinações', text: thought3 });
-                        thoughtsBuffer.push(thought3);
-
-                        // ---- FASE 4: SÍNTESE FINAL ----
-                        let msgFase4 = [
-                            { role: 'system', content: baseSystem },
-                            { role: 'user', content: prompt },
-                            { role: 'assistant', content: thought3 },
-                            { role: 'user', content: "Baseado em toda a validação de fatos acima, dê a resposta final direta e clara para minha pergunta principal." }
-                        ];
-                        const finalAnswer = await runInferencePhase(msgFase4, 200, "Síntese da Resposta Final", 4);
-
-                        // Finaliza a Pipeline
-                        postMessage({ type: 'inference_complete', text: finalAnswer, thoughts: thoughtsBuffer });
-
-                    } catch(err) {
-                        postMessage({ type: 'inference_complete', text: "Erro crasso na pipeline: " + err.message, thoughts: [] });
-                    }
+                        postMessage({ type: 'complete', text: text.trim(), thoughts });
+                    } catch(err) { postMessage({ type: 'error', msg: err.message }); }
                 }
             };
         `;
 
-        class AppController {
+        // ==========================================
+        // DATABASE / MEMORY
+        // ==========================================
+        class OmniMemory {
             constructor() {
-                this.mem = new MemoryEngine();
-                this.ui = new UIEngine();
-                this.worker = null;
-                this.isProcessing = false;
-                this.filesTracking = new Map();
-                
-                this.bindEvents();
-                this.ui.log("Sistema Pronto. RAG Autônomo preparado.", "warn");
+                this.db = JSON.parse(localStorage.getItem('gama_omni_db')) || { images: [], texts: [] };
+            }
+            save() { localStorage.setItem('gama_omni_db', JSON.stringify(this.db)); }
+            addImage(prompt, url, seed) {
+                const item = { type: 'image', id: Date.now(), prompt, url, seed, date: new Date().toLocaleTimeString() };
+                this.db.images.unshift(item); this.save(); return item;
+            }
+            addText(prompt, answer) {
+                const item = { type: 'text', id: Date.now(), prompt, answer, date: new Date().toLocaleTimeString() };
+                this.db.texts.unshift(item); this.save(); return item;
+            }
+            clear() { this.db = { images: [], texts: [] }; this.save(); }
+        }
+
+        // ==========================================
+        // UI ENGINE
+        // ==========================================
+        class UIEngine {
+            constructor() {
+                this.els = {
+                    body: document.getElementById('app-body'),
+                    chat: document.getElementById('chat-container'),
+                    input: document.getElementById('user-input'),
+                    btnSend: document.getElementById('btn-send'),
+                    btnInit: document.getElementById('btn-init'),
+                    bootScreen: document.getElementById('boot-screen'),
+                    console: document.getElementById('console-output'),
+                    status: document.getElementById('system-status'),
+                    indicator: document.getElementById('status-indicator'),
+                    historyList: document.getElementById('history-list'),
+                    dlProgress: document.getElementById('download-progress'),
+                    dlStats: document.getElementById('download-stats'),
+                    dlTitle: document.getElementById('dl-title'),
+                    
+                    // Tabs
+                    tabVis: document.getElementById('tab-visual'),
+                    tabAgt: document.getElementById('tab-agentic'),
+                    sideTitle: document.getElementById('sidebar-title'),
+                    vramTxt: document.getElementById('vram-status'),
+                    bootDesc: document.getElementById('boot-desc'),
+                    bootCard: document.getElementById('boot-card')
+                };
+                this.refs = {};
+                this.activeMode = 'visual'; // visual | agentic
+                this.applyTheme();
             }
 
-            bindEvents() {
-                this.ui.els.btnInit.addEventListener('click', () => this.boot());
-                this.ui.els.btnSend.addEventListener('click', () => this.send());
-                this.ui.els.input.addEventListener('keypress', (e) => {
-                    if(e.key === 'Enter' && !this.isProcessing && !this.ui.els.btnSend.disabled) this.send();
+            log(msg, colorClass = 'text-gray-400') {
+                const el = document.createElement('div');
+                el.className = colorClass;
+                el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}`;
+                this.els.console.appendChild(el);
+                this.els.console.scrollTop = this.els.console.scrollHeight;
+            }
+
+            setMode(mode) {
+                this.activeMode = mode;
+                this.applyTheme();
+            }
+
+            applyTheme() {
+                const isVis = this.activeMode === 'visual';
+                
+                // Tabs
+                this.els.tabVis.classList.toggle('active', isVis);
+                this.els.tabAgt.classList.toggle('active', !isVis);
+                
+                // Body Classes para controle de CSS global
+                this.els.body.classList.toggle('mode-visual', isVis);
+                this.els.body.classList.toggle('mode-agentic', !isVis);
+
+                // CSS Variables Override
+                document.documentElement.style.setProperty('--active-primary', isVis ? 'var(--img-cyan)' : 'var(--txt-purple)');
+                document.documentElement.style.setProperty('--active-secondary', isVis ? 'var(--img-pink)' : 'var(--txt-blue)');
+
+                // Sidebar e UI Elements
+                this.els.sideTitle.innerText = isVis ? "GALERIA VISUAL" : "MEMÓRIA NEURAL";
+                this.els.sideTitle.className = `font-mono text-xs font-bold ${isVis ? 'text-cyan-500' : 'text-purple-500'}`;
+                this.els.vramTxt.innerText = isVis ? "VRAM: 24GB" : "VRAM: 8GB";
+                this.els.vramTxt.className = isVis ? "text-cyan-400" : "text-purple-400";
+                
+                this.els.input.placeholder = isVis ? "Descreva a imagem que deseja gerar..." : "Pergunte algo para a pesquisa autônoma...";
+                this.els.input.style.borderColor = isVis ? 'var(--img-cyan)' : 'var(--txt-purple)';
+                this.els.btnSend.style.backgroundColor = isVis ? 'var(--img-cyan)' : 'var(--txt-purple)';
+                this.els.dlProgress.style.backgroundColor = isVis ? 'var(--img-cyan)' : 'var(--txt-purple)';
+
+                // Boot Screen
+                this.els.bootCard.style.borderColor = isVis ? 'var(--img-cyan)' : 'var(--txt-purple)';
+                this.els.btnInit.innerText = isVis ? "[ ATIVAR GPU VISUAL ]" : "[ ATIVAR MOTOR RAG ]";
+                this.els.bootDesc.innerHTML = isVis 
+                    ? `<p class="text-pink-400 font-bold">> Pipeline Visual Progressiva</p><ul class="text-[11px] text-gray-400 space-y-1 ml-2 border-l border-gray-700 pl-2"><li>Fase 1: Parsing NLP (CLIP)</li><li>Fase 2: Latent Denoising</li><li>Fase 3: VAE Pixel Decoding</li></ul>`
+                    : `<p class="text-blue-400 font-bold">> Pipeline RAG Autônoma</p><ul class="text-[11px] text-gray-400 space-y-1 ml-2 border-l border-gray-700 pl-2"><li>Fase 1: Dedução Lógica</li><li>Fase 2: Busca Wikipedia</li><li>Fase 3: Síntese de Resposta</li></ul>`;
+            }
+
+            renderHistory(list, loadCallback) {
+                this.els.historyList.innerHTML = '';
+                list.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = "history-item p-2 bg-gray-900/40 rounded border border-gray-800";
+                    div.innerHTML = `<div class="text-gray-200 font-bold mb-1 truncate text-[11px]">${item.prompt}</div>
+                                     <div class="text-[9px] text-gray-500">${item.date}</div>`;
+                    div.onclick = () => loadCallback(item);
+                    this.els.historyList.appendChild(div);
                 });
             }
 
-            boot() {
+            updateStatus(text, state) {
+                this.els.status.innerText = text;
+                const color = state === 'ready' ? 'green' : state === 'processing' ? (this.activeMode==='visual'?'var(--img-pink)':'var(--txt-purple)') : 'red';
+                this.els.indicator.style.backgroundColor = color;
+                this.els.indicator.style.boxShadow = `0 0 10px ${color}`;
+                if(state === 'processing') this.els.indicator.classList.add('glow-active');
+                else this.els.indicator.classList.remove('glow-active');
+            }
+
+            createResponseNode() {
+                const div = document.createElement('div');
+                div.className = "flex justify-start w-full";
+                const isVis = this.activeMode === 'visual';
+                
+                const innerDiv = document.createElement('div');
+                innerDiv.className = `glass-panel p-4 max-w-[90%] md:max-w-[75%] rounded-tr-xl rounded-br-xl rounded-bl-xl border-l-2 shadow-lg flex flex-col gap-3 w-full`;
+                innerDiv.style.borderColor = isVis ? 'var(--img-pink)' : 'var(--txt-purple)';
+                
+                innerDiv.innerHTML = `<div class="flex items-center gap-2 mb-1"><span class="font-mono text-[10px]" style="color: ${isVis ? 'var(--img-pink)' : 'var(--txt-purple)'}">GAMA IA // ${isVis ? 'VISUAL' : 'AGENTIC'}</span></div>`;
+                
+                const accordion = document.createElement('details');
+                accordion.className = "think-box"; accordion.open = true;
+                accordion.innerHTML = `<summary>⚡ Processando Pipeline...</summary><div class="think-content"></div>`;
+                
+                const monitor = document.createElement('div');
+                monitor.className = "phase-monitor active";
+                monitor.innerHTML = `
+                    <div class="flex justify-between font-mono text-[10px] text-gray-300 mb-1">
+                        <span class="phase-name">Aguardando...</span>
+                        <span class="phase-msg">Step 0</span>
+                    </div>
+                    <div class="w-full bg-black h-1.5 rounded overflow-hidden border border-gray-800">
+                        <div class="phase-fill h-full w-0 transition-all duration-100" style="background: ${isVis ? 'linear-gradient(to right, var(--img-cyan), var(--img-pink))' : 'var(--txt-blue)'}"></div>
+                    </div>`;
+
+                const contentArea = document.createElement('div');
+                contentArea.className = "w-full rounded-lg relative overflow-hidden";
+                
+                if(isVis) {
+                    contentArea.innerHTML = `<div class="image-skeleton absolute inset-0"><span class="font-mono text-xs text-gray-500 z-10 bg-black/50 px-2 py-1 rounded">Construindo Latentes...</span></div>`;
+                    contentArea.style.minHeight = '300px';
+                } else {
+                    contentArea.innerHTML = `<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap inline text-node"></p><span class="inline-block w-2 h-4 cursor-blink align-middle ml-1 hidden cursor" style="background: var(--txt-purple)"></span>`;
+                }
+
+                innerDiv.append(accordion, monitor, contentArea);
+                div.appendChild(innerDiv);
+                this.els.chat.appendChild(div);
+                this.els.chat.scrollTop = this.els.chat.scrollHeight;
+                
+                this.refs = { accordion, thinkContent: accordion.querySelector('.think-content'), contentArea, monitor, pbName: monitor.querySelector('.phase-name'), pbMsg: monitor.querySelector('.phase-msg'), pbFill: monitor.querySelector('.phase-fill') };
+                
+                if(!isVis) {
+                    this.refs.textNode = contentArea.querySelector('.text-node');
+                    this.refs.cursor = contentArea.querySelector('.cursor');
+                }
+            }
+
+            appendUserMsg(text) {
+                const div = document.createElement('div'); div.className = "flex justify-end w-full";
+                div.innerHTML = `<div class="glass-panel p-4 max-w-[80%] rounded-tl-xl rounded-br-xl rounded-bl-xl bg-gray-900/50"><div class="mb-1"><span class="font-mono text-[10px] text-gray-500">OPERADOR</span></div><p class="text-gray-100 text-sm whitespace-pre-wrap">${this.escapeHTML(text)}</p></div>`;
+                this.els.chat.appendChild(div); this.els.chat.scrollTop = this.els.chat.scrollHeight;
+            }
+
+            // Visual Effect
+            decodePixelEffect(imageUrl) {
+                this.refs.pbName.innerText = "Decodificação Pixel VAE";
+                this.refs.accordion.querySelector('summary').innerText = `⚡ Finalizado`;
+                
+                const img = new Image(); img.crossOrigin = "anonymous"; img.src = imageUrl;
+                img.onload = () => {
+                    this.refs.contentArea.innerHTML = '';
+                    const canvas = document.createElement('canvas');
+                    canvas.className = "pixel-decode w-full h-auto rounded-lg shadow-lg";
+                    canvas.width = img.width; canvas.height = img.height;
+                    const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
+                    this.refs.contentArea.appendChild(canvas);
+
+                    const sizes = [8, 16, 32, 64, 128, 256, 512, 1024]; let step = 0;
+                    const draw = () => {
+                        if(step < sizes.length) {
+                            const res = sizes[step];
+                            this.refs.pbFill.style.width = `${(step/sizes.length)*100}%`;
+                            this.refs.pbMsg.innerText = `${res}px`;
+                            ctx.drawImage(img, 0, 0, res, res);
+                            ctx.drawImage(canvas, 0, 0, res, res, 0, 0, canvas.width, canvas.height);
+                            step++; setTimeout(draw, 100);
+                        } else {
+                            ctx.imageSmoothingEnabled = true; ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            setTimeout(() => {
+                                this.refs.contentArea.innerHTML = `<img src="${imageUrl}" class="w-full h-auto rounded-lg shadow-lg border border-gray-700">`;
+                                this.refs.monitor.classList.remove('active'); this.refs.accordion.open = false;
+                                window.App.finish();
+                            }, 300);
+                        }
+                    }; draw();
+                };
+            }
+
+            // Text Effect
+            streamText(text) {
+                this.refs.monitor.classList.remove('active');
+                this.refs.accordion.open = false;
+                this.refs.cursor.classList.remove('hidden');
+                
+                let i = 0; const speed = Math.max(1, Math.floor(text.length/60));
+                const type = () => {
+                    if (i < text.length) {
+                        this.refs.textNode.textContent += text.substring(i, i + speed);
+                        i += speed; this.els.chat.scrollTop = this.els.chat.scrollHeight;
+                        requestAnimationFrame(type);
+                    } else {
+                        this.refs.cursor.remove(); window.App.finish();
+                    }
+                }; requestAnimationFrame(type);
+            }
+
+            escapeHTML(str) { return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t])); }
+        }
+
+        // ==========================================
+        // MAIN APP CONTROLLER
+        // ==========================================
+        class AppController {
+            constructor() {
+                this.mem = new OmniMemory();
+                this.ui = new UIEngine();
+                this.workers = { visual: null, agentic: null };
+                this.states = { visual: false, agentic: false };
+                this.isProcessing = false;
+                this.filesTrack = new Map();
+                
+                this.bindEvents();
+                this.loadHistoryUI();
+            }
+
+            bindEvents() {
+                this.ui.els.tabVis.onclick = () => this.switchMode('visual');
+                this.ui.els.tabAgt.onclick = () => this.switchMode('agentic');
+                this.ui.els.btnInit.onclick = () => this.bootCurrentMode();
+                this.ui.els.btnSend.onclick = () => this.send();
+                this.ui.els.input.onkeypress = (e) => { if(e.key === 'Enter' && !this.isProcessing && !this.ui.els.btnSend.disabled) this.send(); };
+                this.ui.els.btnNewChat.onclick = () => { this.ui.els.chat.innerHTML = ''; this.mem.clear(); this.loadHistoryUI(); };
+            }
+
+            switchMode(mode) {
+                if(this.isProcessing) return;
+                this.ui.setMode(mode);
+                this.loadHistoryUI();
+                
+                if(this.states[mode]) {
+                    this.ui.els.bootScreen.style.display = 'none';
+                    this.ui.els.input.disabled = false; this.ui.els.btnSend.disabled = false;
+                    this.ui.updateStatus("ONLINE", "ready");
+                } else {
+                    this.ui.els.bootScreen.style.display = 'flex';
+                    this.ui.els.bootScreen.style.opacity = '1';
+                    this.ui.els.input.disabled = true; this.ui.els.btnSend.disabled = true;
+                    this.ui.updateStatus("OFFLINE", "error");
+                }
+            }
+
+            loadHistoryUI() {
+                const list = this.ui.activeMode === 'visual' ? this.mem.db.images : this.mem.db.texts;
+                this.ui.renderHistory(list, (item) => {
+                    this.ui.els.chat.innerHTML = '';
+                    this.ui.appendUserMsg(item.prompt);
+                    const div = document.createElement('div');
+                    div.className = "glass-panel p-4 max-w-[80%] rounded-tr-xl rounded-br-xl rounded-bl-xl border-l-2 border-gray-600 mb-4";
+                    if(item.type === 'image') div.innerHTML = `<img src="${item.url}" class="w-full rounded-lg">`;
+                    else div.innerHTML = `<p class="text-sm text-gray-200 whitespace-pre-wrap">${item.answer}</p>`;
+                    this.ui.els.chat.appendChild(div);
+                });
+            }
+
+            bootCurrentMode() {
+                const mode = this.ui.activeMode;
                 this.ui.els.btnInit.disabled = true;
                 this.ui.els.btnInit.innerText = "ALOCANDO...";
                 this.ui.updateStatus("CARREGANDO MODELO", "processing");
 
-                const blob = new Blob([workerCode], { type: 'application/javascript' });
-                this.worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
-
-                this.worker.onmessage = (e) => this.handleWorker(e.data);
-                this.worker.postMessage({ action: 'INIT' });
+                const code = mode === 'visual' ? imageWorkerCode : textWorkerCode;
+                const blob = new Blob([code], { type: 'application/javascript' });
+                this.workers[mode] = new Worker(URL.createObjectURL(blob), { type: 'module' });
+                
+                this.workers[mode].onmessage = (e) => this.handleWorkerMsg(mode, e.data);
+                this.workers[mode].postMessage({ action: 'INIT' });
             }
 
-            handleWorker(data) {
+            handleWorkerMsg(mode, data) {
                 switch(data.type) {
-                    case 'log': this.ui.log(data.msg, data.lvl); break;
-                    case 'download_progress':
-                        if(data.data.name) {
-                            this.filesTracking.set(data.data.name, { loaded: data.data.loaded || 0, total: data.data.total || 0 });
-                            let tL = 0, tT = 0;
-                            this.filesTracking.forEach(v => { tL += v.loaded; tT += v.total; });
-                            this.ui.updateDownload(tL, tT);
+                    case 'progress':
+                        if(mode === 'agentic' && data.data.name) {
+                            this.filesTrack.set(data.data.name, { loaded: data.data.loaded || 0, total: data.data.total || 0 });
+                            let tL = 0, tT = 0; this.filesTrack.forEach(v => { tL += v.loaded; tT += v.total; });
+                            if(tT > 0) {
+                                this.ui.els.dlProgress.style.width = `${(tL/tT)*100}%`;
+                                this.ui.els.dlStats.innerText = `${(tL/1024/1024).toFixed(1)}MB / ${(tT/1024/1024).toFixed(1)}MB`;
+                            }
+                        } else if (mode === 'visual') {
+                            this.ui.els.dlProgress.style.width = `${data.percent}%`;
+                            this.ui.els.dlStats.innerText = `${data.percent}%`;
                         }
                         break;
                     case 'ready':
+                        this.states[mode] = true;
+                        this.ui.els.bootScreen.style.opacity = '0';
+                        setTimeout(() => this.ui.els.bootScreen.style.display = 'none', 500);
+                        this.ui.els.input.disabled = false; this.ui.els.btnSend.disabled = false;
+                        this.ui.els.input.focus();
                         this.ui.updateStatus("ONLINE", "ready");
-                        this.ui.unlock();
+                        this.ui.els.btnInit.disabled = false;
+                        this.ui.log(`Motor [${mode.toUpperCase()}] ativado com sucesso.`, 'text-green-400');
                         break;
                     case 'phase_start':
-                        this.ui.log(`Iniciando Fase ${data.step}: ${data.name}`, 'phase');
-                        this.ui.updatePhaseMonitor(data.name, data.step);
+                        this.ui.refs.pbName.innerText = `[Fase ${data.step}] ${data.name}`;
+                        this.ui.refs.pbFill.style.width = `0%`;
                         break;
-                    case 'phase_progress':
-                        this.ui.updatePhaseProgress(data.percent, data.eta);
+                    case 'phase_prog':
+                        this.ui.refs.pbFill.style.width = `${data.percent}%`;
+                        this.ui.refs.pbMsg.innerText = data.msg;
                         break;
-                    case 'thought_step':
-                        this.ui.appendThoughtStep(data.title, data.text);
+                    case 'thought':
+                        if(this.ui.refs.thinkContent) {
+                            this.ui.refs.thinkContent.insertAdjacentHTML('beforeend', `<span class="think-step-title">${data.title}</span>${this.ui.escapeHTML(data.text)}\n\n`);
+                            this.ui.els.chat.scrollTop = this.ui.els.chat.scrollHeight;
+                        }
                         break;
-                    case 'inference_complete':
-                        this.mem.addMessage('assistant', data.text, data.thoughts);
-                        this.ui.finishPipeline(data.thoughts.length, data.text);
+                    case 'complete':
+                        if(mode === 'visual') {
+                            this.mem.addImage(data.prompt, data.image, data.seed);
+                            this.ui.decodePixelEffect(data.image);
+                        } else {
+                            this.mem.addText(data.prompt, data.text);
+                            this.ui.streamText(data.text);
+                        }
+                        this.loadHistoryUI();
+                        break;
+                    case 'error':
+                        this.ui.log(`Erro crítico: ${data.msg}`, 'text-red-500');
+                        this.finish();
                         break;
                 }
             }
@@ -616,38 +696,32 @@
             send() {
                 const text = this.ui.els.input.value.trim();
                 if(!text) return;
-
+                
+                const mode = this.ui.activeMode;
                 this.isProcessing = true;
                 this.ui.els.input.value = "";
-                this.ui.els.btnSend.disabled = true;
-                this.ui.els.input.disabled = true;
-                this.ui.updateStatus("LOOP INFERÊNCIA", "processing");
-
-                this.mem.addMessage('user', text);
-                this.ui.appendUserMsg(text);
-
-                // Prepara Interface para o Stream e Progresso
-                this.ui.createAIStreamNode();
+                this.ui.els.btnSend.disabled = true; this.ui.els.input.disabled = true;
                 
-                // Manda pro Worker rodar as 4 Fases
-                this.worker.postMessage({ 
-                    action: 'INFER', 
-                    payload: { prompt: text, history: this.mem.getSlidingWindow(4) } 
-                });
+                // Trava a troca de tabs durante processamento
+                this.ui.els.tabVis.disabled = true; this.ui.els.tabAgt.disabled = true;
+                this.ui.updateStatus("PROCESSANDO", "processing");
+
+                this.ui.appendUserMsg(text);
+                this.ui.createResponseNode();
+                
+                this.workers[mode].postMessage({ action: 'INFER', payload: { prompt: text } });
             }
 
-            // Chamado pela UIEngine após terminar a animação de digitação
-            finalizeInference() {
+            finish() {
                 this.isProcessing = false;
-                this.ui.els.btnSend.disabled = false;
-                this.ui.els.input.disabled = false;
+                this.ui.els.btnSend.disabled = false; this.ui.els.input.disabled = false;
+                this.ui.els.tabVis.disabled = false; this.ui.els.tabAgt.disabled = false;
                 this.ui.els.input.focus();
                 this.ui.updateStatus("ONLINE", "ready");
-                this.ui.log("Ciclo Agentic RAG Finalizado com Sucesso.", "success");
             }
         }
 
-        window.addEventListener('DOMContentLoaded', () => { window.GamaApp = new AppController(); });
+        window.addEventListener('DOMContentLoaded', () => { window.App = new AppController(); });
     </script>
 </body>
 </html>
