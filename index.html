@@ -3,48 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GAMA IA v15.0 // Hybrid Multi-Modal System</title>
+    <title>GAMA IA // Agentic RAG Multi-Step</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
     <style>
-        :root { --bg-dark: #050505; --accent-purple: #8b5cf6; --accent-cyan: #06b6d4; --accent-pink: #ec4899; --glass-border: rgba(139, 92, 246, 0.2); }
-        body { background-color: var(--bg-dark); color: #e2e8f0; font-family: 'Inter', sans-serif; overflow: hidden; background-image: radial-gradient(circle at 50% 0%, #1a1025 0%, #050505 80%); }
+        :root {
+            --bg-dark: #050505;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-blue: #3b82f6;
+            --glass-border: rgba(139, 92, 246, 0.2);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% 0%, #1a1025 0%, #050505 80%);
+        }
+
         .font-mono { font-family: 'JetBrains Mono', monospace; }
-        .glass-panel { background: rgba(15, 10, 25, 0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); }
-        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #3b0764; border-radius: 2px; } ::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } } .cursor-blink { animation: blink 1s step-end infinite; }
-        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 5px var(--accent-purple); } 50% { box-shadow: 0 0 20px var(--accent-purple); } } .glow-active { animation: pulse-glow 2s infinite; }
-        details.think-box { border-left: 2px solid #6b7280; background: rgba(17, 24, 39, 0.6); border-radius: 4px; margin-bottom: 12px; overflow: hidden; transition: all 0.3s ease; }
-        details.think-box.image-mode { border-left-color: var(--accent-cyan); }
-        details.think-box summary { cursor: pointer; padding: 8px 12px; font-size: 0.75rem; font-weight: bold; color: #9ca3af; display: flex; align-items: center; gap: 8px; list-style: none; }
-        details.think-box.image-mode summary { color: #67e8f9; }
-        details.think-box summary::-webkit-details-marker { display: none; } details.think-box summary:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
-        details.think-box summary::before { content: "▶"; font-size: 0.6rem; transition: transform 0.2s ease; } details.think-box[open] summary::before { transform: rotate(90deg); }
+
+        .glass-panel {
+            background: rgba(15, 10, 25, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .scanlines::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            z-index: 50;
+            background-size: 100% 3px;
+            pointer-events: none;
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3b0764; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .cursor-blink { animation: blink 1s step-end infinite; }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px var(--accent-purple); }
+            50% { box-shadow: 0 0 20px var(--accent-purple); }
+        }
+        .glow-active { animation: pulse-glow 2s infinite; }
+
+        .loader-bar {
+            height: 2px;
+            background: var(--accent-purple);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        /* Acordeão Nativo de Pensamento */
+        details.think-box {
+            border-left: 2px solid #6b7280;
+            background: rgba(17, 24, 39, 0.6);
+            border-radius: 4px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        details.think-box summary {
+            cursor: pointer;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+        }
+        
+        details.think-box summary::-webkit-details-marker { display: none; }
+        details.think-box summary:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+        details.think-box summary::before { content: "▶"; font-size: 0.6rem; transition: transform 0.2s ease; }
+        details.think-box[open] summary::before { transform: rotate(90deg); }
         details.think-box[open] summary { border-bottom: 1px solid rgba(75, 85, 99, 0.4); }
-        .think-content { padding: 12px; font-size: 0.75rem; color: #9ca3af; white-space: pre-wrap; font-family: 'JetBrains Mono', monospace; }
-        .think-step-title { color: #8b5cf6; font-weight: bold; margin-top: 12px; margin-bottom: 4px; display: block; border-bottom: 1px dashed rgba(139, 92, 246, 0.3); padding-bottom: 2px; }
-        .image-mode .think-step-title { color: #ec4899; border-bottom-color: rgba(236, 72, 153, 0.3); } .think-step-title:first-child { margin-top: 0; }
-        .phase-monitor { background: rgba(0,0,0,0.4); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 4px; padding: 8px; margin-bottom: 12px; display: none; }
-        .phase-monitor.image-mode { border-color: rgba(6, 182, 212, 0.3); } .phase-monitor.active { display: block; }
-        .image-skeleton { width: 100%; height: 300px; background: linear-gradient(90deg, #111827 25%, #1f2937 50%, #111827 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 0.5rem; border: 1px dashed #374151; display: flex; align-items: center; justify-content: center; }
-        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        canvas.pixel-decode { image-rendering: pixelated; }
-        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
+        
+        .think-content {
+            padding: 12px;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            white-space: pre-wrap;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .think-step-title {
+            color: #8b5cf6;
+            font-weight: bold;
+            margin-top: 12px;
+            margin-bottom: 4px;
+            display: block;
+            border-bottom: 1px dashed rgba(139, 92, 246, 0.3);
+            padding-bottom: 2px;
+        }
+        .think-step-title:first-child { margin-top: 0; }
+        
+        /* Estilos do ETA e Progress */
+        .phase-monitor {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 4px;
+            padding: 8px;
+            margin-top: 8px;
+            display: none;
+        }
+        .phase-monitor.active { display: block; }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col relative">
+<body class="h-screen w-screen flex flex-col scanlines relative">
+
     <header class="h-16 glass-panel border-b border-t-0 border-x-0 flex items-center justify-between px-6 z-10 shrink-0">
         <div class="flex items-center gap-3">
             <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_red]" id="status-indicator"></div>
-            <h1 class="text-2xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-cyan-400 to-pink-500">
-                GAMA IA <span class="text-sm font-mono text-gray-500 font-normal">v15.0</span>
+            <h1 class="text-2xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
+                GAMA IA <span class="text-sm font-mono text-gray-500 font-normal">v11.0 [AGENTIC_PIPELINE]</span>
             </h1>
         </div>
-        <div class="font-mono text-xs text-gray-400 flex items-center gap-4">
-            <div class="flex items-center gap-2 border-r border-gray-700 pr-4">
-                <label class="text-[10px] text-purple-400">NÍVEL DE RACIOCÍNIO:</label>
-                <input type="number" id="reasoning-level" min="1" class="w-12 bg-black/60 border border-purple-500/50 rounded text-xs text-center text-white focus:outline-none focus:border-purple-300 transition-colors py-1" value="3">
-            </div>
+        <div class="font-mono text-xs text-gray-400 flex gap-4">
             <div>STATUS: <span id="system-status" class="text-red-400">OFFLINE</span></div>
         </div>
     </header>
@@ -54,15 +145,17 @@
             <div class="flex-1 flex flex-col min-h-0 overflow-hidden border-b border-purple-500/20 pb-4">
                 <div class="flex justify-between items-center mb-2 border-b border-purple-500/30 pb-1">
                     <h2 class="font-mono text-xs text-purple-500">MEMÓRIA NEURAL</h2>
-                    <button id="btn-new-chat" class="text-[10px] font-mono bg-purple-900/40 hover:bg-purple-600/60 text-purple-300 px-2 py-1 rounded transition-all cursor-pointer z-50">+ NOVO</button>
+                    <button id="btn-new-chat" class="text-[10px] font-mono bg-purple-900/40 hover:bg-purple-600/60 text-purple-300 px-2 py-1 rounded transition-all">+ NOVO</button>
                 </div>
-                <div id="history-list" class="flex-1 overflow-y-auto font-mono text-xs space-y-1 pr-1"></div>
+                <div id="history-list" class="flex-1 overflow-y-auto font-mono text-xs text-gray-400 space-y-1 pr-1"></div>
             </div>
+
             <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
-                <h2 class="font-mono text-xs text-purple-500 mb-2 border-b border-purple-500/30 pb-1">SYSTEM LOGS</h2>
+                <h2 class="font-mono text-xs text-purple-500 mb-2 border-b border-purple-500/30 pb-1">KERNEL LOGS</h2>
                 <div id="console-output" class="flex-1 font-mono text-[10px] text-gray-400 overflow-y-auto break-all space-y-1"></div>
+                
                 <div class="mt-4 pt-4 border-t border-gray-800 shrink-0">
-                    <p class="font-mono text-xs text-gray-500 mb-1">DOWNLOAD TENSOR CORE</p>
+                    <p class="font-mono text-xs text-gray-500 mb-1">DOWNLOAD DOS TENSORES</p>
                     <div class="w-full bg-gray-900 h-2 rounded overflow-hidden">
                         <div id="download-progress" class="bg-purple-500 h-full w-0 transition-all duration-300"></div>
                     </div>
@@ -76,27 +169,32 @@
                 <div class="glass-panel p-8 max-w-lg w-[90%] rounded-xl border-l-2 border-l-purple-500 flex flex-col gap-5 relative overflow-hidden">
                     <div class="flex items-center gap-3 border-b border-purple-500/20 pb-3 z-10">
                         <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_red] cursor-blink"></div>
-                        <h2 class="font-mono text-sm text-purple-400 tracking-widest font-bold">HYBRID KERNEL // STANDBY</h2>
+                        <h2 class="font-mono text-sm text-purple-400 tracking-widest font-bold">GAMA KERNEL // STANDBY</h2>
                     </div>
+                    
                     <div class="text-gray-300 text-sm leading-relaxed font-mono z-10 space-y-2">
-                        <p class="text-cyan-400 font-bold">> MÚLTIPLOS MODELOS INTEGRADOS</p>
+                        <p class="text-blue-400 font-bold">> NOVO: Pipeline Autônomo de 4 Fases (Agentic RAG)</p>
                         <ul class="text-[11px] text-gray-400 space-y-1 ml-2 border-l border-gray-700 pl-2">
-                            <li><span class="text-purple-400">[MODO TEXTO]</span> RAG Dinâmico e N Fases de Autocrítica</li>
-                            <li><span class="text-pink-400">[MODO IMAGEM]</span> Síntese Visual Pixel-Decoded</li>
-                            <li class="mt-2 text-gray-500 italic">Dica: Para imagens, use "/imagine [texto]".</li>
+                            <li>[Fase 1] Geração de Lógica Inicial</li>
+                            <li>[Fase 2] Busca Dinâmica e Checagem na Wikipedia</li>
+                            <li>[Fase 3] Loop Interno de Autocrítica</li>
+                            <li>[Fase 4] Síntese da Resposta Final</li>
                         </ul>
                     </div>
+                    
                     <button id="btn-init" class="mt-2 w-full px-6 py-4 bg-purple-900/40 hover:bg-purple-600/60 border border-purple-500/50 text-purple-300 font-mono text-sm rounded transition-all z-10">
-                        [ INICIALIZAR SYSTEMAS INTELIGENTES ]
+                        [ INICIAR INFERÊNCIA MULTI-STEP ]
                     </button>
                 </div>
             </div>
 
-            <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-6 pb-24 z-10 relative scroll-smooth"></div>
+            <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-6 pb-24 z-10"></div>
 
             <div class="h-24 glass-panel border-t border-b-0 border-x-0 p-4 absolute bottom-0 w-full flex gap-3 items-center z-20">
-                <input type="text" id="user-input" disabled class="flex-1 h-full bg-black/60 border border-gray-700 rounded-lg px-4 font-mono text-sm text-white focus:outline-none focus:border-purple-500 transition-all disabled:opacity-50" placeholder="Pergunte algo ou peça para gerar uma imagem..." autocomplete="off">
-                <button id="btn-send" disabled class="px-6 py-3 h-full bg-purple-600 hover:bg-purple-500 disabled:bg-gray-800 disabled:text-gray-500 text-white font-bold rounded transition-all">PROCESSAR</button>
+                <input type="text" id="user-input" disabled class="flex-1 h-full bg-black/60 border border-gray-700 rounded-lg px-4 font-mono text-sm text-white focus:outline-none focus:border-purple-500 transition-all disabled:opacity-50" placeholder="Aguardando inicialização da Engine..." autocomplete="off">
+                <button id="btn-send" disabled class="px-6 py-3 h-full bg-purple-600 hover:bg-purple-500 disabled:bg-gray-800 disabled:text-gray-500 text-white font-bold rounded transition-all">
+                    PROCESSAR
+                </button>
             </div>
         </section>
     </main>
@@ -104,7 +202,7 @@
     <script type="module">
         class MemoryEngine {
             constructor() {
-                this.dbKey = 'gama_ia_sessions_v15';
+                this.dbKey = 'gama_ia_sessions';
                 this.sessions = this.loadAll();
                 this.currentSessionId = null;
             }
@@ -123,20 +221,17 @@
                 else if (!this.currentSessionId) this.createSession();
                 return this.sessions.find(s => s.id === this.currentSessionId);
             }
-            addMessage(role, content, extraParams = {}) {
+            addMessage(role, content, thoughts = []) {
                 const session = this.getCurrentSession();
-                if(session.messages.length === 0 && role === 'user') {
-                    let titleText = content.replace(/^\/imagine\s+/i, '');
-                    session.title = titleText.substring(0, 30) + "...";
-                }
-                session.messages.push({ role, content, timestamp: new Date().toISOString(), ...extraParams });
+                if(session.messages.length === 0 && role === 'user') session.title = content.substring(0, 30) + "...";
+                session.messages.push({ role, content, thoughts, timestamp: new Date().toISOString() });
                 session.updatedAt = Date.now();
                 this.saveAll();
             }
             getSlidingWindow(max = 4) {
                 const session = this.getCurrentSession();
                 if(!session || session.messages.length === 0) return [];
-                return session.messages.filter(m => m.type !== 'image').slice(-max).map(m => ({ role: m.role, content: m.content }));
+                return session.messages.slice(-max).map(m => ({ role: m.role, content: m.content }));
             }
         }
 
@@ -156,158 +251,164 @@
                     dlProgress: document.getElementById('download-progress'),
                     dlStats: document.getElementById('download-stats')
                 };
-                this.refs = { accordion: null, thinkContent: null, textNode: null, cursor: null, monitor: null, pbFill: null, pbName: null, pbEta: null, imageContainer: null };
+                this.refs = { accordion: null, thinkContent: null, textNode: null, cursor: null, monitor: null, pbFill: null, pbName: null, pbEta: null };
             }
+
             log(msg, type = 'info') {
-                const colors = { info: 'text-gray-400', success: 'text-green-400', warn: 'text-yellow-400', error: 'text-red-500', phase: 'text-blue-400', gpu: 'text-pink-400' };
+                const colors = { info: 'text-gray-400', success: 'text-green-400', warn: 'text-yellow-400', error: 'text-red-500', phase: 'text-blue-400' };
                 const el = document.createElement('div');
-                el.className = colors[type]; el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}`;
-                this.els.console.appendChild(el); this.els.console.scrollTop = this.els.console.scrollHeight;
+                el.className = colors[type];
+                el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}`;
+                this.els.console.appendChild(el);
+                this.els.console.scrollTop = this.els.console.scrollHeight;
             }
+
             updateStatus(text, state) {
                 this.els.status.innerText = text;
-                this.els.indicator.className = `w-3 h-3 rounded-full shadow-[0_0_10px_currentColor] ${state === 'ready' ? 'bg-green-500 text-green-500' : state === 'processing' ? 'bg-purple-500 text-purple-500 glow-active' : 'bg-red-500 text-red-500'}`;
+                this.els.indicator.className = `w-3 h-3 rounded-full shadow-[0_0_10px_currentColor] ${
+                    state === 'ready' ? 'bg-green-500 text-green-500' : 
+                    state === 'processing' ? 'bg-purple-500 text-purple-500 glow-active' : 'bg-red-500 text-red-500'
+                }`;
             }
+
             updateDownload(loaded, total) {
                 if(total === 0) return;
                 const percent = (loaded / total) * 100;
                 this.els.dlProgress.style.width = `${percent}%`;
                 this.els.dlStats.innerText = `${(loaded/1024/1024).toFixed(1)} MB / ${(total/1024/1024).toFixed(1)} MB`;
             }
+
             unlock() {
-                this.els.input.disabled = false; this.els.btnSend.disabled = false; this.els.input.focus();
-                if(this.els.bootScreen) { this.els.bootScreen.style.opacity = '0'; setTimeout(() => this.els.bootScreen.remove(), 500); }
+                this.els.input.disabled = false;
+                this.els.btnSend.disabled = false;
+                this.els.input.placeholder = "Digite o prompt para a cadeia de 4 fases...";
+                this.els.input.focus();
+                if(this.els.bootScreen) {
+                    this.els.bootScreen.style.opacity = '0';
+                    setTimeout(() => this.els.bootScreen.remove(), 500);
+                }
             }
-            renderHistoryList(sessions, currentId, onSelectCallback) {
-                this.els.historyList.innerHTML = '';
-                sessions.forEach(s => {
-                    const btn = document.createElement('button');
-                    btn.className = `w-full text-left truncate px-3 py-2 mb-1 rounded cursor-pointer transition-all border ${s.id === currentId ? 'bg-purple-900/50 text-purple-200 border-purple-500' : 'hover:bg-gray-800 text-gray-500 border-transparent'}`;
-                    btn.innerText = s.title || 'Sessão Vazia';
-                    btn.onclick = () => onSelectCallback(s.id);
-                    this.els.historyList.appendChild(btn);
-                });
-            }
-            renderPastMessages(messages) {
-                this.els.chat.innerHTML = '';
-                messages.forEach(m => {
-                    if(m.role === 'user') this.appendUserMsg(m.content);
-                    else if(m.type === 'image') this.loadInstantGeneration(m);
-                    else this.appendPastAIMsg(m);
-                });
+
+            appendUserMsg(text) {
+                const div = document.createElement('div');
+                div.className = "flex justify-end";
+                div.innerHTML = `
+                    <div class="glass-panel p-4 max-w-[80%] rounded-tl-xl rounded-br-xl rounded-bl-xl border-r-2 border-r-gray-400 bg-gray-900/50">
+                        <div class="mb-1"><span class="font-mono text-[10px] text-gray-400">USUÁRIO</span></div>
+                        <p class="text-gray-100 text-sm whitespace-pre-wrap">${this.escapeHTML(text)}</p>
+                    </div>`;
+                this.els.chat.appendChild(div);
                 this.els.chat.scrollTop = this.els.chat.scrollHeight;
             }
-            appendUserMsg(text) {
-                const div = document.createElement('div'); div.className = "flex justify-end";
-                div.innerHTML = `<div class="glass-panel p-4 max-w-[80%] rounded-tl-xl rounded-br-xl rounded-bl-xl border-r-2 border-r-gray-400 bg-gray-900/50"><div class="mb-1"><span class="font-mono text-[10px] text-gray-400">USUÁRIO</span></div><p class="text-gray-100 text-sm whitespace-pre-wrap">${this.escapeHTML(text)}</p></div>`;
-                this.els.chat.appendChild(div); this.els.chat.scrollTop = this.els.chat.scrollHeight;
-            }
-            appendPastAIMsg(msg) {
-                const div = document.createElement('div'); div.className = "flex justify-start w-full";
-                let thoughtsHTML = '';
-                if(msg.thoughts && msg.thoughts.length > 0) {
-                    let steps = msg.thoughts.map((t, i) => `<span class="think-step-title">Fase ${i+1}</span>${this.escapeHTML(t)}\n\n`).join('');
-                    thoughtsHTML = `<details class="think-box"><summary>🧠 Raciocínio Analítico Retido (${msg.thoughts.length} Fases)</summary><div class="think-content">${steps}</div></details>`;
-                }
-                div.innerHTML = `<div class="glass-panel p-4 max-w-[85%] rounded-tr-xl rounded-br-xl rounded-bl-xl border-l-2 border-l-purple-500 shadow-[0_0_15px_rgba(139,92,246,0.2)] flex flex-col gap-2 w-full"><div class="flex items-center gap-2 mb-1"><span class="font-mono text-[10px] text-purple-400">GAMA IA // AGENTIC RAG</span></div>${thoughtsHTML}<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">${this.escapeHTML(msg.content)}</p></div>`;
-                this.els.chat.appendChild(div);
-            }
-            createTextStreamNode() {
-                const div = document.createElement('div'); div.className = "flex justify-start w-full";
-                const innerDiv = document.createElement('div'); innerDiv.className = "glass-panel p-4 max-w-[85%] rounded-tr-xl rounded-br-xl rounded-bl-xl border-l-2 border-l-purple-500 shadow-[0_0_15px_rgba(139,92,246,0.2)] flex flex-col gap-2 w-full";
+
+            // Inicia o nó de resposta da IA em branco (preparado para Stream e Progresso)
+            createAIStreamNode() {
+                const div = document.createElement('div');
+                div.className = "flex justify-start w-full";
+                
+                const innerDiv = document.createElement('div');
+                innerDiv.className = "glass-panel p-4 max-w-[85%] rounded-tr-xl rounded-br-xl rounded-bl-xl border-l-2 border-l-purple-500 shadow-[0_0_15px_rgba(139,92,246,0.2)] flex flex-col gap-2 w-full";
+                
                 innerDiv.innerHTML = `<div class="flex items-center gap-2 mb-1"><span class="font-mono text-[10px] text-purple-400">GAMA IA // AGENTIC RAG</span></div>`;
-                const accordion = document.createElement('details'); accordion.className = "think-box"; accordion.open = true;
-                accordion.innerHTML = `<summary>🧠 Inicializando Pipeline Dinâmico...</summary><div class="think-content"></div>`;
-                const monitor = document.createElement('div'); monitor.className = "phase-monitor active";
-                monitor.innerHTML = `<div class="flex justify-between font-mono text-[10px] text-blue-300 mb-1"><span class="phase-name">Preparando Tópicos...</span><span class="phase-eta text-yellow-400">ETA: Calculando...</span></div><div class="w-full bg-black h-1 rounded overflow-hidden"><div class="phase-fill bg-blue-500 h-full w-0 transition-all duration-200"></div></div>`;
-                const textWrapper = document.createElement('div'); const textNode = document.createElement('p'); textNode.className = "text-gray-200 text-sm leading-relaxed whitespace-pre-wrap inline";
-                const cursor = document.createElement('span'); cursor.className = "inline-block w-2 h-4 bg-purple-400 cursor-blink align-middle ml-1 hidden";
-                textWrapper.appendChild(textNode); textWrapper.appendChild(cursor);
-                innerDiv.appendChild(accordion); innerDiv.appendChild(monitor); innerDiv.appendChild(textWrapper); div.appendChild(innerDiv);
-                this.els.chat.appendChild(div); this.els.chat.scrollTop = this.els.chat.scrollHeight;
-                this.refs = { mode: 'text', accordion, thinkContent: accordion.querySelector('.think-content'), textNode, cursor, monitor, pbName: monitor.querySelector('.phase-name'), pbEta: monitor.querySelector('.phase-eta'), pbFill: monitor.querySelector('.phase-fill') };
+                
+                // Acordeão de Pensamento
+                const accordion = document.createElement('details');
+                accordion.className = "think-box";
+                accordion.open = true;
+                accordion.innerHTML = `<summary>🧠 Inicializando Pipeline...</summary><div class="think-content"></div>`;
+                
+                // Monitor de Progresso das Fases (Fica dentro do painel principal, acima da resposta final)
+                const monitor = document.createElement('div');
+                monitor.className = "phase-monitor active";
+                monitor.innerHTML = `
+                    <div class="flex justify-between font-mono text-[10px] text-blue-300 mb-1">
+                        <span class="phase-name">Preparando Tópicos...</span>
+                        <span class="phase-eta text-yellow-400">ETA: Calculando...</span>
+                    </div>
+                    <div class="w-full bg-black h-1 rounded overflow-hidden">
+                        <div class="phase-fill bg-blue-500 h-full w-0 transition-all duration-200"></div>
+                    </div>
+                `;
+
+                // Wrapper de Texto da Resposta Final
+                const textWrapper = document.createElement('div');
+                const textNode = document.createElement('p');
+                textNode.className = "text-gray-200 text-sm leading-relaxed whitespace-pre-wrap inline";
+                const cursor = document.createElement('span');
+                cursor.className = "inline-block w-2 h-4 bg-purple-400 cursor-blink align-middle ml-1 hidden";
+                textWrapper.appendChild(textNode);
+                textWrapper.appendChild(cursor);
+
+                innerDiv.appendChild(accordion);
+                innerDiv.appendChild(monitor);
+                innerDiv.appendChild(textWrapper);
+                div.appendChild(innerDiv);
+                
+                this.els.chat.appendChild(div);
+                this.els.chat.scrollTop = this.els.chat.scrollHeight;
+                
+                // Guardar referências para atualização via Worker
+                this.refs = {
+                    accordion,
+                    thinkContent: accordion.querySelector('.think-content'),
+                    textNode,
+                    cursor,
+                    monitor,
+                    pbName: monitor.querySelector('.phase-name'),
+                    pbEta: monitor.querySelector('.phase-eta'),
+                    pbFill: monitor.querySelector('.phase-fill')
+                };
             }
-            createImageGenerationNode() {
-                const div = document.createElement('div'); div.className = "flex justify-start w-full";
-                const innerDiv = document.createElement('div'); innerDiv.className = "glass-panel p-4 max-w-[90%] md:max-w-[70%] rounded-tr-xl rounded-br-xl rounded-bl-xl border-l-2 border-l-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.15)] flex flex-col gap-3 w-full";
-                innerDiv.innerHTML = `<div class="flex items-center gap-2 mb-1"><span class="font-mono text-[10px] text-pink-400">GAMA IA // VAE DECODER</span></div>`;
-                const accordion = document.createElement('details'); accordion.className = "think-box image-mode"; accordion.open = true;
-                accordion.innerHTML = `<summary>⚡ Processando Matriz de Imagem...</summary><div class="think-content"></div>`;
-                const monitor = document.createElement('div'); monitor.className = "phase-monitor image-mode active";
-                monitor.innerHTML = `<div class="flex justify-between font-mono text-[10px] text-cyan-300 mb-1"><span class="phase-name">Aguardando...</span><span class="phase-eta text-pink-400">0%</span></div><div class="w-full bg-black h-1.5 rounded overflow-hidden border border-gray-800"><div class="phase-fill bg-gradient-to-r from-cyan-500 to-pink-500 h-full w-0 transition-all duration-100"></div></div>`;
-                const imageContainer = document.createElement('div'); imageContainer.className = "w-full rounded-lg overflow-hidden relative bg-[#050505] min-h-[300px] flex items-center justify-center";
-                imageContainer.innerHTML = `<div class="image-skeleton w-full h-full absolute inset-0"><span class="font-mono text-xs text-gray-500 z-10 bg-black/50 px-2 py-1 rounded">Construindo Latentes...</span></div>`;
-                innerDiv.appendChild(accordion); innerDiv.appendChild(monitor); innerDiv.appendChild(imageContainer); div.appendChild(innerDiv);
-                this.els.chat.appendChild(div); this.els.chat.scrollTop = this.els.chat.scrollHeight;
-                this.refs = { mode: 'image', accordion, thinkContent: accordion.querySelector('.think-content'), imageContainer, monitor, pbName: monitor.querySelector('.phase-name'), pbEta: monitor.querySelector('.phase-eta'), pbFill: monitor.querySelector('.phase-fill') };
+
+            updatePhaseMonitor(name, step) {
+                this.refs.pbName.innerText = `[${step}/4] ${name}`;
+                this.refs.pbFill.style.width = `0%`;
+                this.refs.pbEta.innerText = "ETA: Calculando...";
+                this.refs.monitor.classList.add('active');
             }
-            updatePhaseMonitor(name, step, totalSteps = null) {
-                this.refs.pbName.innerText = totalSteps ? `[${step}/${totalSteps}] ${name}` : `[Fase ${step}] ${name}`;
-                this.refs.pbFill.style.width = `0%`; if(this.refs.mode === 'text') this.refs.pbEta.innerText = "ETA: Calculando...";
+
+            updatePhaseProgress(percent, etaSeconds) {
+                this.refs.pbFill.style.width = `${percent}%`;
+                this.refs.pbEta.innerText = `ETA: ${etaSeconds}s`;
             }
-            updatePhaseProgress(percent, msg) { this.refs.pbFill.style.width = `${percent}%`; this.refs.pbEta.innerText = this.refs.mode === 'text' ? `ETA: ${msg}s` : msg; }
+
             appendThoughtStep(stepTitle, content) {
                 if(!this.refs.thinkContent) return;
-                this.refs.thinkContent.insertAdjacentHTML('beforeend', `<span class="think-step-title">${stepTitle}</span>${this.escapeHTML(content)}\n\n`);
+                const html = `<span class="think-step-title">${stepTitle}</span>${this.escapeHTML(content)}\n\n`;
+                this.refs.thinkContent.insertAdjacentHTML('beforeend', html);
                 this.els.chat.scrollTop = this.els.chat.scrollHeight;
             }
-            finishTextPipeline(totalSteps, finalText) {
-                this.refs.monitor.classList.remove('active'); this.refs.accordion.querySelector('summary').innerText = `🧠 Cadeia de Raciocínio Concluída (${totalSteps} Fases)`;
-                this.refs.accordion.open = false; this.refs.cursor.classList.remove('hidden'); this.streamText(finalText);
+
+            finishPipeline(totalSteps, finalText) {
+                this.refs.monitor.classList.remove('active'); // Esconde o monitor de progresso
+                this.refs.accordion.querySelector('summary').innerText = `🧠 Cadeia de Raciocínio Concluída (${totalSteps} Fases)`;
+                this.refs.accordion.open = false; // Fecha o acordeão para focar na resposta
+                this.refs.cursor.classList.remove('hidden'); // Mostra o cursor para a digitação
+                this.streamText(finalText);
             }
+
             streamText(text) {
-                let i = 0; const speed = Math.max(1, Math.floor(text.length / 100)); 
+                let i = 0;
+                const speed = Math.max(1, Math.floor(text.length / 100)); 
                 const type = () => {
-                    if (i < text.length) { this.refs.textNode.textContent += text.substring(i, i + speed); i += speed; this.els.chat.scrollTop = this.els.chat.scrollHeight; requestAnimationFrame(type); }
-                    else { this.refs.cursor.remove(); window.GamaApp.finalizeInference(); }
-                }; requestAnimationFrame(type);
-            }
-            decodePixelEffect(imageUrl, seed) {
-                this.updatePhaseMonitor("Transferindo Pixels e Upscaling", 4);
-                this.refs.accordion.querySelector('summary').innerText = `⚡ Decodificação VAE Final (Seed: ${seed})`;
-                const img = new Image(); img.crossOrigin = "anonymous"; img.src = imageUrl;
-                img.onload = () => {
-                    this.refs.imageContainer.innerHTML = '';
-                    const canvas = document.createElement('canvas'); canvas.className = "pixel-decode w-full h-auto rounded-lg shadow-[0_0_20px_rgba(236,72,153,0.3)] border border-pink-500/50";
-                    canvas.width = img.width; canvas.height = img.height; const ctx = canvas.getContext('2d');
-                    ctx.imageSmoothingEnabled = false; this.refs.imageContainer.appendChild(canvas);
-                    const sizes = [4, 8, 16, 32, 64, 128, 256, 512, 1024]; let currentStep = 0;
-                    const drawStep = () => {
-                        if(currentStep < sizes.length) {
-                            const res = sizes[currentStep]; const p = (currentStep / sizes.length) * 100;
-                            this.updatePhaseProgress(p, `${Math.round(p)}%`);
-                            ctx.drawImage(img, 0, 0, res, res); ctx.drawImage(canvas, 0, 0, res, res, 0, 0, canvas.width, canvas.height);
-                            currentStep++; setTimeout(drawStep, 150);
-                        } else {
-                            ctx.imageSmoothingEnabled = true; ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                            this.updatePhaseProgress(100, `100%`);
-                            setTimeout(() => {
-                                const finalImg = document.createElement('img'); finalImg.src = imageUrl; finalImg.className = "w-full h-auto rounded-lg shadow-[0_0_20px_rgba(236,72,153,0.3)] border border-pink-500/50";
-                                const dlBtn = document.createElement('a'); dlBtn.href = imageUrl; dlBtn.target = "_blank"; dlBtn.className = "absolute bottom-3 right-3 bg-black/70 hover:bg-pink-600 text-white font-mono text-[10px] px-3 py-1 rounded border border-pink-500/50 backdrop-blur-sm transition-all"; dlBtn.innerText = "[ DOWNLOAD HD ]";
-                                this.refs.imageContainer.innerHTML = ''; this.refs.imageContainer.appendChild(finalImg); this.refs.imageContainer.appendChild(dlBtn);
-                                this.refs.monitor.classList.remove('active'); this.refs.accordion.open = false; window.GamaApp.finalizeInference();
-                            }, 500);
-                        }
-                    }; drawStep();
+                    if (i < text.length) {
+                        this.refs.textNode.textContent += text.substring(i, i + speed);
+                        i += speed;
+                        this.els.chat.scrollTop = this.els.chat.scrollHeight;
+                        requestAnimationFrame(type);
+                    } else {
+                        this.refs.cursor.remove();
+                        window.GamaApp.finalizeInference();
+                    }
                 };
-                img.onerror = () => { this.refs.imageContainer.innerHTML = `<div class="p-4 border border-red-500 bg-red-900/20 text-red-400 font-mono text-sm rounded">Falha de conexão com Node.</div>`; window.GamaApp.finalizeInference(); };
+                requestAnimationFrame(type);
             }
-            loadInstantGeneration(item) {
-                const div = document.createElement('div'); div.className = "flex justify-start w-full";
-                let thoughtsHTML = '';
-                if(item.thoughts && item.thoughts.length > 0) {
-                    let steps = item.thoughts.map((t, i) => `<span class="think-step-title">Fase ${i+1}</span>${this.escapeHTML(t)}\n\n`).join('');
-                    thoughtsHTML = `<details class="think-box image-mode"><summary>⚡ Logs de Síntese Visual (Seed: ${item.seed})</summary><div class="think-content">${steps}</div></details>`;
-                }
-                div.innerHTML = `<div class="glass-panel p-4 max-w-[90%] md:max-w-[70%] rounded-tr-xl rounded-br-xl rounded-bl-xl border-l-2 border-l-pink-500 flex flex-col gap-3 w-full"><div class="flex items-center gap-2 mb-1"><span class="font-mono text-[10px] text-pink-400">GAMA IA // VAE RECUPERADO</span></div>${thoughtsHTML}<div class="w-full rounded-lg overflow-hidden relative"><img src="${item.imageUrl}" class="w-full h-auto rounded-lg shadow-[0_0_10px_rgba(236,72,153,0.2)] border border-pink-500/30"><a href="${item.imageUrl}" target="_blank" class="absolute bottom-3 right-3 bg-black/70 hover:bg-pink-600 text-white font-mono text-[10px] px-3 py-1 rounded border border-pink-500/50 backdrop-blur-sm transition-all">[ DOWNLOAD HD ]</a></div></div>`;
-                this.els.chat.appendChild(div); this.els.chat.scrollTop = this.els.chat.scrollHeight;
-            }
+
             escapeHTML(str) { return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t])); }
         }
 
         // ==========================================
-        // WORKER SCRIPT: 100% IDÊNTICO À V11 QUE FUNCIONAVA
-        // Sem tratadores de erros artificiais que travam a execução
+        // WORKER SCRIPT (4 FASES COM WIKIPEDIA RAG)
         // ==========================================
         const workerCode = `
             import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
@@ -315,41 +416,65 @@
             env.allowLocalModels = false;
             env.useBrowserCache = true;
 
-            let textGenerator;
+            let generator;
 
             function extractResponse(out) {
-                const text = Array.isArray(out[0].generated_text) ? out[0].generated_text[out[0].generated_text.length - 1].content : String(out[0].generated_text).split('<|im_start|>assistant').pop().replace('<|im_end|>', '');
+                const text = Array.isArray(out[0].generated_text) 
+                    ? out[0].generated_text[out[0].generated_text.length - 1].content 
+                    : String(out[0].generated_text).split('<|im_start|>assistant').pop().replace('<|im_end|>', '');
                 return text.trim();
             }
 
+            // Função para RAG dinâmico dentro do Worker
             async function fetchWikipedia(query) {
                 try {
+                    // Limpa a query para buscar os termos chaves principais
                     const clean = query.replace(/[?.!]/g, '').split(' ').slice(0, 6).join(' ');
                     const url = 'https://pt.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(clean) + '&utf8=&format=json&origin=*';
-                    const res = await fetch(url); const data = await res.json();
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    
                     if(data.query && data.query.search.length > 0) {
                         const title = data.query.search[0].title;
                         const extUrl = 'https://pt.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&titles=' + encodeURIComponent(title) + '&format=json&origin=*';
-                        const extRes = await fetch(extUrl); const extData = await extRes.json(); const pageId = Object.keys(extData.query.pages)[0];
+                        const extRes = await fetch(extUrl);
+                        const extData = await extRes.json();
+                        const pageId = Object.keys(extData.query.pages)[0];
                         return extData.query.pages[pageId].extract.substring(0, 500);
                     }
-                    return "Nenhum dado retornado.";
-                } catch(e) { return "Falha na conexão."; }
+                    return "Nenhum dado externo retornado para a pesquisa.";
+                } catch(e) {
+                    return "Falha na conexão com a base de dados.";
+                }
             }
 
-            async function runTextPhase(messages, maxTokens, phaseName, stepNum, totalSteps) {
-                postMessage({ type: 'phase_start', name: phaseName, step: stepNum, totalSteps });
-                let tokens = 0; let start = Date.now();
-                const out = await textGenerator(messages, {
-                    max_new_tokens: maxTokens, do_sample: false, repetition_penalty: 1.1,
+            // Helper para rodar uma fase com monitoramento de Tokens para o ETA
+            async function runInferencePhase(messages, maxTokens, phaseName, stepNum) {
+                postMessage({ type: 'phase_start', name: phaseName, step: stepNum });
+                
+                let tokens = 0;
+                let start = Date.now();
+                
+                const out = await generator(messages, {
+                    max_new_tokens: maxTokens,
+                    do_sample: false,
+                    repetition_penalty: 1.1,
                     callback_function: () => {
-                        tokens++; const tps = tokens / ((Date.now() - start) / 1000); 
-                        const eta = (Math.max(0, maxTokens - tokens) / tps).toFixed(1);
+                        tokens++;
+                        const elapsedSecs = (Date.now() - start) / 1000;
+                        const tps = tokens / elapsedSecs; // Tokens per second
+                        const remainingTokens = Math.max(0, maxTokens - tokens);
+                        const eta = (remainingTokens / tps).toFixed(1);
                         const percent = Math.min(100, (tokens / maxTokens) * 100);
-                        if(tokens % 3 === 0) postMessage({ type: 'phase_progress', percent, msg: eta });
+                        
+                        // Atualiza a UI a cada ~3 tokens para não sobrecarregar o postMessage
+                        if(tokens % 3 === 0) {
+                            postMessage({ type: 'phase_progress', percent, eta });
+                        }
                     }
                 });
-                postMessage({ type: 'phase_progress', percent: 100, msg: "0.0" });
+                
+                postMessage({ type: 'phase_progress', percent: 100, eta: "0.0" });
                 return extractResponse(out);
             }
 
@@ -357,162 +482,171 @@
                 const { action, payload } = e.data;
                 
                 if(action === 'INIT') {
-                    try {
-                        postMessage({ type: 'log', msg: '[1/3] Engine Iniciada. Alocando Módulos Nativos...', lvl: 'info' });
-                        postMessage({ type: 'log', msg: '[2/3] Baixando/Carregando Tensores (Qwen1.5-0.5B)...', lvl: 'warn' });
-                        
-                        textGenerator = await pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
-                            progress_callback: (x) => postMessage({ type: 'download_progress', data: x })
-                        });
-                        
-                        postMessage({ type: 'log', msg: '[3/3] Tensor Core Pronto na Memória!', lvl: 'success' });
-                        postMessage({ type: 'ready' });
-                    } catch(err) {
-                        postMessage({ type: 'log', msg: 'Erro interno na pipeline: ' + err.message, lvl: 'error' });
-                    }
+                    postMessage({ type: 'log', msg: 'Baixando/Carregando Tensores...', lvl: 'info' });
+                    generator = await pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
+                        progress_callback: (x) => postMessage({ type: 'download_progress', data: x })
+                    });
+                    postMessage({ type: 'ready' });
                 }
                 
-                if(action === 'INFER_TEXT') {
+                if(action === 'INFER') {
                     try {
-                        const { history, prompt, reasoningLevel } = payload;
+                        const { history, prompt } = payload;
                         let baseSystem = "Você é uma IA analítica. Responda APENAS em Português do Brasil.";
                         let conversation = history ? [...history] : [];
                         let thoughtsBuffer = [];
-                        const N = Math.max(1, parseInt(reasoningLevel) || 3);
-                        const totalSteps = N + 1;
-                        let lastThought = "";
 
-                        lastThought = await runTextPhase([{ role: 'system', content: baseSystem + " Escreva seu raciocínio lógico. Não dê a resposta final." }, ...conversation, { role: 'user', content: prompt }], 100, "Dedução Inicial", 1, totalSteps);
-                        postMessage({ type: 'thought_step', title: 'Fase 1: Raciocínio Lógico', text: lastThought });
-                        thoughtsBuffer.push(lastThought);
+                        // ---- FASE 1: LÓGICA INICIAL ----
+                        let msgFase1 = [
+                            { role: 'system', content: baseSystem + " INSTRUÇÃO: Escreva apenas seu raciocínio lógico inicial sobre a pergunta do usuário. Não dê a resposta final ainda." },
+                            ...conversation,
+                            { role: 'user', content: prompt }
+                        ];
+                        const thought1 = await runInferencePhase(msgFase1, 100, "Análise e Raciocínio Lógico", 1);
+                        postMessage({ type: 'thought_step', title: 'Fase 1: Dedução Inicial', text: thought1 });
+                        thoughtsBuffer.push(thought1);
 
-                        if (N >= 2) {
-                            postMessage({ type: 'phase_start', name: "Validação Wikipedia", step: 2, totalSteps });
-                            postMessage({ type: 'phase_progress', percent: 30, msg: "1.5" });
-                            const wikiData = await fetchWikipedia(prompt);
-                            postMessage({ type: 'phase_progress', percent: 80, msg: "0.2" });
-                            lastThought = "Consultando contexto:\\n" + wikiData;
-                            postMessage({ type: 'thought_step', title: 'Fase 2: Contexto Externo', text: lastThought });
-                            thoughtsBuffer.push(lastThought);
-                            postMessage({ type: 'phase_progress', percent: 100, msg: "0.0" });
-                        }
-
-                        for(let i = 3; i <= N; i++) {
-                            lastThought = await runTextPhase([{ role: 'system', content: baseSystem }, { role: 'user', content: prompt }, { role: 'assistant', content: "Pensamento: " + lastThought }, { role: 'user', content: "Corrija falhas e aprofunde." }], 120, "Autocrítica", i, totalSteps);
-                            postMessage({ type: 'thought_step', title: "Fase " + i + ": Aprofundamento", text: lastThought });
-                            thoughtsBuffer.push(lastThought);
-                        }
-
-                        const finalAnswer = await runTextPhase([{ role: 'system', content: baseSystem }, { role: 'user', content: prompt }, { role: 'assistant', content: "Análises: " + lastThought }, { role: 'user', content: "Dê a resposta final direta." }], 250, "Síntese Final", totalSteps, totalSteps);
-                        postMessage({ type: 'inference_complete', text: finalAnswer, thoughts: thoughtsBuffer });
-                    } catch(err) { postMessage({ type: 'inference_complete', text: "Erro: " + err.message, thoughts: [] }); }
-                }
-
-                if(action === 'INFER_IMAGE') {
-                    try {
-                        const { prompt } = payload; const seed = Math.floor(Math.random() * 99999999); let thoughtsBuffer = [];
-                        postMessage({ type: 'phase_start', name: "Token Extraction", step: 1 });
-                        const thought1 = "Analisando prompt: '" + prompt + "'\\nModificadores: 'masterpiece, 8k resolution'.";
-                        postMessage({ type: 'thought_step', title: 'Fase 1: Pre-processamento', text: thought1 }); thoughtsBuffer.push(thought1);
-                        await new Promise(r => setTimeout(r, 800));
-
-                        postMessage({ type: 'phase_start', name: "Latent Denoising", step: 2 });
-                        const thought2 = "SEED: " + seed + "\\nEscala CFG: 7.5\\nSampler: DPM++ 2M Karras";
-                        postMessage({ type: 'thought_step', title: 'Fase 2: Latentes', text: thought2 }); thoughtsBuffer.push(thought2);
-                        for(let step = 1; step <= 20; step++) { postMessage({ type: 'phase_progress', percent: (step/20)*100, msg: step + '/20' }); await new Promise(r => setTimeout(r, 80)); }
-
-                        postMessage({ type: 'phase_start', name: "VAE Fetching", step: 3 });
-                        let cleanPrompt = prompt.replace(/^\/imagine\s+/i, '').replace(/ger[ea]r? (uma )?imagem (de )?/i, '').replace(/desenh[ea]r? (um )?/i, '');
-                        const finalPrompt = cleanPrompt + ", masterpiece, highly detailed, 8k";
-                        const imageUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(finalPrompt) + '?width=1024&height=1024&nologo=true&seed=' + seed;
+                        // ---- FASE 2: WIKIPEDIA RAG DINÂMICO ----
+                        postMessage({ type: 'phase_start', name: "Validação Dinâmica (Wikipedia)", step: 2 });
                         
-                        postMessage({ type: 'thought_step', title: 'Fase 3: Transferência', text: "Baixando mapa de latentes e preparando VAE..." }); thoughtsBuffer.push("Download concluído.");
-                        postMessage({ type: 'image_complete', image: imageUrl, seed: seed, prompt: cleanPrompt, thoughts: thoughtsBuffer });
-                    } catch(err) { postMessage({ type: 'log', msg: err.message, lvl: 'error' }); postMessage({ type: 'inference_complete', text: "Falha na imagem.", thoughts: [] }); }
+                        // Simulando barra de progresso do Fetch (já que não há tokens gerados aqui)
+                        postMessage({ type: 'phase_progress', percent: 30, eta: "1.5" });
+                        const wikiData = await fetchWikipedia(prompt);
+                        postMessage({ type: 'phase_progress', percent: 80, eta: "0.2" });
+                        
+                        const thought2 = "Consultando contexto dinâmico via Wikipedia para o termo-chave da requisição...\\n\\n[DADOS RETORNADOS]:\\n" + wikiData;
+                        postMessage({ type: 'thought_step', title: 'Fase 2: Fact-Checking e Contexto Externo', text: thought2 });
+                        thoughtsBuffer.push(thought2);
+                        postMessage({ type: 'phase_progress', percent: 100, eta: "0.0" });
+
+                        // ---- FASE 3: AUTOCRÍTICA ----
+                        let msgFase3 = [
+                            { role: 'system', content: baseSystem },
+                            { role: 'user', content: prompt },
+                            { role: 'assistant', content: "Meu pensamento inicial: " + thought1 },
+                            { role: 'user', content: "CRÍTICA INTERNA: Leia os dados extraídos da Wikipedia a seguir: '" + wikiData + "'. Revise e corrija o seu pensamento inicial para evitar alucinações. Escreva sua autocrítica apontando o que estava certo e errado." }
+                        ];
+                        const thought3 = await runInferencePhase(msgFase3, 120, "Autocrítica e Alinhamento de Fatos", 3);
+                        postMessage({ type: 'thought_step', title: 'Fase 3: Refinamento e Correção de Alucinações', text: thought3 });
+                        thoughtsBuffer.push(thought3);
+
+                        // ---- FASE 4: SÍNTESE FINAL ----
+                        let msgFase4 = [
+                            { role: 'system', content: baseSystem },
+                            { role: 'user', content: prompt },
+                            { role: 'assistant', content: thought3 },
+                            { role: 'user', content: "Baseado em toda a validação de fatos acima, dê a resposta final direta e clara para minha pergunta principal." }
+                        ];
+                        const finalAnswer = await runInferencePhase(msgFase4, 200, "Síntese da Resposta Final", 4);
+
+                        // Finaliza a Pipeline
+                        postMessage({ type: 'inference_complete', text: finalAnswer, thoughts: thoughtsBuffer });
+
+                    } catch(err) {
+                        postMessage({ type: 'inference_complete', text: "Erro crasso na pipeline: " + err.message, thoughts: [] });
+                    }
                 }
             };
         `;
 
         class AppController {
             constructor() {
-                this.mem = new MemoryEngine(); this.ui = new UIEngine();
-                this.worker = null; this.isProcessing = false; this.filesTracking = new Map();
-                this.levelInput = document.getElementById('reasoning-level');
-                const savedLevel = localStorage.getItem('gama_reasoning_level');
-                if(savedLevel) this.levelInput.value = savedLevel;
-                this.levelInput.addEventListener('change', (e) => {
-                    let val = parseInt(e.target.value); if(val < 1 || isNaN(val)) { val = 1; e.target.value = 1; }
-                    localStorage.setItem('gama_reasoning_level', val);
-                });
-                this.bindEvents(); this.ui.log("Sistema Base Carregado. Aguardando Boot...", "warn");
+                this.mem = new MemoryEngine();
+                this.ui = new UIEngine();
+                this.worker = null;
+                this.isProcessing = false;
+                this.filesTracking = new Map();
+                
+                this.bindEvents();
+                this.ui.log("Sistema Pronto. RAG Autônomo preparado.", "warn");
             }
+
             bindEvents() {
                 this.ui.els.btnInit.addEventListener('click', () => this.boot());
                 this.ui.els.btnSend.addEventListener('click', () => this.send());
-                this.ui.els.input.addEventListener('keypress', (e) => { if(e.key === 'Enter' && !this.isProcessing && !this.ui.els.btnSend.disabled) this.send(); });
-                this.ui.els.btnNewChat.addEventListener('click', () => { if(this.isProcessing) return; this.mem.createSession(); this.loadSession(this.mem.currentSessionId); });
-                if(this.mem.sessions.length > 0) this.loadSession(this.mem.sessions[0].id);
-                else { this.mem.createSession(); this.loadSession(this.mem.currentSessionId); }
+                this.ui.els.input.addEventListener('keypress', (e) => {
+                    if(e.key === 'Enter' && !this.isProcessing && !this.ui.els.btnSend.disabled) this.send();
+                });
             }
-            loadSession(id) {
-                if(this.isProcessing) return; this.mem.currentSessionId = id; const session = this.mem.getCurrentSession();
-                this.ui.renderHistoryList(this.mem.sessions, id, (newId) => this.loadSession(newId)); this.ui.renderPastMessages(session.messages);
-            }
+
             boot() {
                 this.ui.els.btnInit.disabled = true;
-                this.ui.els.btnInit.innerText = "ALOCANDO ENGINE...";
+                this.ui.els.btnInit.innerText = "ALOCANDO...";
                 this.ui.updateStatus("CARREGANDO MODELO", "processing");
 
-                // MÁGICA RECUPERADA DA V11: Sem this.worker.onerror para não travar a UI por falsos-positivos
                 const blob = new Blob([workerCode], { type: 'application/javascript' });
                 this.worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
 
                 this.worker.onmessage = (e) => this.handleWorker(e.data);
                 this.worker.postMessage({ action: 'INIT' });
             }
+
             handleWorker(data) {
                 switch(data.type) {
                     case 'log': this.ui.log(data.msg, data.lvl); break;
                     case 'download_progress':
-                        if(data.data && data.data.name) {
+                        if(data.data.name) {
                             this.filesTracking.set(data.data.name, { loaded: data.data.loaded || 0, total: data.data.total || 0 });
-                            let tL = 0, tT = 0; this.filesTracking.forEach(v => { tL += v.loaded; tT += v.total; });
+                            let tL = 0, tT = 0;
+                            this.filesTracking.forEach(v => { tL += v.loaded; tT += v.total; });
                             this.ui.updateDownload(tL, tT);
                         }
                         break;
-                    case 'ready': this.ui.updateStatus("ONLINE", "ready"); this.ui.unlock(); break;
-                    case 'phase_start': this.ui.updatePhaseMonitor(data.name, data.step, data.totalSteps); break;
-                    case 'phase_progress': this.ui.updatePhaseProgress(data.percent, data.msg); break;
-                    case 'thought_step': this.ui.appendThoughtStep(data.title, data.text); break;
+                    case 'ready':
+                        this.ui.updateStatus("ONLINE", "ready");
+                        this.ui.unlock();
+                        break;
+                    case 'phase_start':
+                        this.ui.log(`Iniciando Fase ${data.step}: ${data.name}`, 'phase');
+                        this.ui.updatePhaseMonitor(data.name, data.step);
+                        break;
+                    case 'phase_progress':
+                        this.ui.updatePhaseProgress(data.percent, data.eta);
+                        break;
+                    case 'thought_step':
+                        this.ui.appendThoughtStep(data.title, data.text);
+                        break;
                     case 'inference_complete':
-                        this.mem.addMessage('assistant', data.text, { type: 'text', thoughts: data.thoughts });
-                        this.ui.renderHistoryList(this.mem.sessions, this.mem.currentSessionId, (newId) => this.loadSession(newId));
-                        this.ui.finishTextPipeline(data.thoughts.length, data.text); break;
-                    case 'image_complete':
-                        this.ui.log("Iniciando upscale de pixels...", "success"); this.ui.updateStatus("RENDERIZANDO", "processing");
-                        this.mem.addMessage('assistant', "[Imagem Gerada]", { type: 'image', imageUrl: data.image, seed: data.seed, prompt: data.prompt, thoughts: data.thoughts });
-                        this.ui.renderHistoryList(this.mem.sessions, this.mem.currentSessionId, (newId) => this.loadSession(newId));
-                        this.ui.decodePixelEffect(data.image, data.seed); break;
+                        this.mem.addMessage('assistant', data.text, data.thoughts);
+                        this.ui.finishPipeline(data.thoughts.length, data.text);
+                        break;
                 }
             }
+
             send() {
-                const text = this.ui.els.input.value.trim(); const rLevel = this.levelInput.value; if(!text) return;
-                this.isProcessing = true; this.ui.els.input.value = ""; this.ui.els.btnSend.disabled = true; this.ui.els.input.disabled = true;
-                this.mem.addMessage('user', text); this.ui.renderHistoryList(this.mem.sessions, this.mem.currentSessionId, (newId) => this.loadSession(newId)); this.ui.appendUserMsg(text);
-                const isImageRequest = /^\/imagine|ger[ea]r? (uma )?imagem|desenh[ea]r?|cri[ea]r? (uma )?imagem/i.test(text);
-                if (isImageRequest) {
-                    this.ui.updateStatus("GPU CLUSTER ATIVO", "processing"); this.ui.log("Modo visual ativado.", "gpu");
-                    this.ui.createImageGenerationNode(); this.worker.postMessage({ action: 'INFER_IMAGE', payload: { prompt: text } });
-                } else {
-                    this.ui.updateStatus("LOOP INFERÊNCIA", "processing"); this.ui.log("Modo texto ativado.", "info");
-                    this.ui.createTextStreamNode(); this.worker.postMessage({ action: 'INFER_TEXT', payload: { prompt: text, history: this.mem.getSlidingWindow(4), reasoningLevel: rLevel } });
-                }
+                const text = this.ui.els.input.value.trim();
+                if(!text) return;
+
+                this.isProcessing = true;
+                this.ui.els.input.value = "";
+                this.ui.els.btnSend.disabled = true;
+                this.ui.els.input.disabled = true;
+                this.ui.updateStatus("LOOP INFERÊNCIA", "processing");
+
+                this.mem.addMessage('user', text);
+                this.ui.appendUserMsg(text);
+
+                // Prepara Interface para o Stream e Progresso
+                this.ui.createAIStreamNode();
+                
+                // Manda pro Worker rodar as 4 Fases
+                this.worker.postMessage({ 
+                    action: 'INFER', 
+                    payload: { prompt: text, history: this.mem.getSlidingWindow(4) } 
+                });
             }
+
+            // Chamado pela UIEngine após terminar a animação de digitação
             finalizeInference() {
-                this.isProcessing = false; this.ui.els.btnSend.disabled = false; this.ui.els.input.disabled = false;
-                this.ui.els.input.focus(); this.ui.updateStatus("ONLINE", "ready"); this.ui.log("Processo finalizado.", "success");
+                this.isProcessing = false;
+                this.ui.els.btnSend.disabled = false;
+                this.ui.els.input.disabled = false;
+                this.ui.els.input.focus();
+                this.ui.updateStatus("ONLINE", "ready");
+                this.ui.log("Ciclo Agentic RAG Finalizado com Sucesso.", "success");
             }
         }
+
         window.addEventListener('DOMContentLoaded', () => { window.GamaApp = new AppController(); });
     </script>
 </body>
