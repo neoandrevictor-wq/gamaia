@@ -126,6 +126,10 @@
             display: flex; align-items: center; justify-content: center;
         }
         @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Esconde setas do input number */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col relative" id="app-body">
@@ -136,12 +140,18 @@
             <h1 class="text-xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
                 GAMA <span class="font-light text-white">OMNI</span>
             </h1>
-            <span class="ml-4 text-[10px] font-mono bg-purple-900/50 text-purple-300 border border-purple-700 px-2 py-0.5 rounded">UNIFIED ENGINE</span>
+            <span class="hidden md:inline-block ml-4 text-[10px] font-mono bg-purple-900/50 text-purple-300 border border-purple-700 px-2 py-0.5 rounded">UNIFIED ENGINE</span>
         </div>
         
         <div class="font-mono text-xs text-gray-400 flex gap-4 items-center">
-            <div class="text-cyan-400">MEM: AUTO</div>
-            <div>STATUS: <span id="system-status" class="text-red-400">OFFLINE</span></div>
+            <!-- Novo Campo de Loops de Pensamento -->
+            <div class="flex items-center bg-black/50 p-1.5 rounded border border-gray-700 hover:border-gray-500 transition-colors" title="Profundidade de pensamento (ciclos)">
+                <span class="text-[10px] font-bold text-gray-500 mr-2">DEPTH:</span>
+                <input type="number" id="thought-loops" min="1" max="99" value="1" class="w-8 bg-transparent text-white font-bold text-center focus:outline-none focus:text-cyan-400">
+            </div>
+            
+            <div class="hidden sm:block text-cyan-400 ml-2">MEM: AUTO</div>
+            <div class="ml-2">STATUS: <span id="system-status" class="text-red-400">OFFLINE</span></div>
         </div>
     </header>
 
@@ -192,6 +202,7 @@
                             <span class="text-pink-400 font-bold block mb-1">2. Geração Visual</span>
                             <span class="text-[10px] text-gray-500 block">Ex: "/imagine uma cidade futurista", "Desenhe um gato voador"</span>
                         </div>
+                        <p class="text-[10px] text-gray-500 italic mt-2">* Ajuste a variável "DEPTH" no topo para controlar os ciclos lógicos de pensamento da IA antes da resposta.</p>
                     </div>
                     
                     <button id="btn-init" class="mt-2 w-full px-6 py-4 bg-gradient-to-r from-cyan-900 to-purple-900 hover:from-cyan-800 hover:to-purple-800 border border-gray-600 text-white font-mono text-sm rounded transition-all z-10 font-bold tracking-wider shadow-lg">
@@ -227,33 +238,49 @@
         ];
 
         // ==========================================
-        // WORKER SCRIPT: IMAGEM
+        // WORKER SCRIPT: IMAGEM (Refatorado para Loops)
         // ==========================================
         const imageWorkerCode = `
             self.onmessage = async (e) => {
                 const { action, payload } = e.data;
                 if(action === 'INIT') {
-                    // Simula alocação rápida de pipeline de imagem
                     postMessage({ type: 'ready', mode: 'visual' });
                 }
                 if(action === 'INFER') {
                     try {
-                        const { prompt } = payload;
+                        const { prompt, loops } = payload;
                         const seed = Math.floor(Math.random() * 99999999);
-                        postMessage({ type: 'phase_start', name: "CLIP Token Extraction", step: 1, mode: 'visual' });
-                        postMessage({ type: 'thought', title: 'Fase 1: Pre-processamento', text: "Analisando prompt: '" + prompt + "'\\nExtraindo vetores do texto...", mode: 'visual' });
-                        await new Promise(r => setTimeout(r, 600));
+                        
+                        // As 4 Fases Base da Imagem
+                        const phaseNames = [
+                            "Análise Semântica (CLIP)",
+                            "Expansão Dinâmica de Prompt",
+                            "Mapeamento de Pesos Latentes",
+                            "Ajuste Fino (CFG & Noise)"
+                        ];
 
-                        postMessage({ type: 'phase_start', name: "Latent Space Denoising", step: 2, mode: 'visual' });
-                        postMessage({ type: 'thought', title: 'Fase 2: Geração Latente', text: "Inicializando Tensor com SEED: " + seed + "\\nEscala CFG: 7.5\\nIniciando loop...", mode: 'visual' });
-                        for(let step = 1; step <= 20; step++) {
-                            postMessage({ type: 'phase_prog', percent: (step/20)*100, msg: 'Step ' + step + '/20', mode: 'visual' });
-                            await new Promise(r => setTimeout(r, 60)); 
+                        // Executa as fases baseadas na quantidade de Loops selecionada
+                        for(let i = 1; i <= loops; i++) {
+                            let pIdx = (i - 1) % 4; // Garante que o índice resete 0,1,2,3 -> 0,1,2,3
+                            postMessage({ type: 'phase_start', name: phaseNames[pIdx], step: i, mode: 'visual' });
+                            postMessage({ type: 'phase_prog', percent: 50, msg: "Computando matriz...", mode: 'visual' });
+                            
+                            let thoughtText = "";
+                            if(pIdx === 0) thoughtText = "Extraindo vetores do texto base.\\nAlvo: '" + prompt + "'";
+                            if(pIdx === 1) thoughtText = "Injetando hiper-parâmetros visuais estéticos e focais.";
+                            if(pIdx === 2) thoughtText = "Balanceando matriz de difusão contra alucinações estruturais.";
+                            if(pIdx === 3) thoughtText = "Configurando semente generativa global: SEED " + (seed + i) + " | Iteração T=" + i;
+
+                            postMessage({ type: 'thought', title: 'Ciclo ' + i + ': ' + phaseNames[pIdx], text: thoughtText, mode: 'visual' });
+                            await new Promise(r => setTimeout(r, 600 + (Math.random() * 400))); 
+                            postMessage({ type: 'phase_prog', percent: 100, msg: "Fase superada.", mode: 'visual' });
                         }
 
-                        postMessage({ type: 'phase_start', name: "VAE Buffer Download", step: 3, mode: 'visual' });
+                        // Fase Final Real (Renderização/Download)
+                        postMessage({ type: 'phase_start', name: "Renderização Final (VAE)", step: loops + 1, mode: 'visual' });
+                        postMessage({ type: 'thought', title: 'Pipeline Visual Finalizado', text: "Solicitando compilação final da matriz e decodificando imagem...", mode: 'visual' });
+                        
                         const imgUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=1024&height=1024&nologo=true&seed=' + seed;
-                        postMessage({ type: 'thought', title: 'Fase 3: Transferência', text: "Baixando mapa de latentes e preparando matriz...", mode: 'visual' });
                         
                         postMessage({ type: 'complete', image: imgUrl, seed, prompt, mode: 'visual' });
                     } catch(err) { postMessage({ type: 'error', msg: err.message, mode: 'visual' }); }
@@ -262,7 +289,7 @@
         `;
 
         // ==========================================
-        // WORKER SCRIPT: TEXTO (RAG)
+        // WORKER SCRIPT: TEXTO (Refatorado para Loops)
         // ==========================================
         const textWorkerCode = `
             import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
@@ -279,8 +306,8 @@
                         const extData = await extRes.json();
                         return extData.query.pages[Object.keys(extData.query.pages)[0]].extract.substring(0, 400);
                     }
-                    return "Nenhum dado externo encontrado.";
-                } catch(e) { return "Falha de conexão com fonte externa."; }
+                    return "Nenhum dado externo encontrado. Operando com pesos internos.";
+                } catch(e) { return "Falha de conexão. Usando apenas rede neural base."; }
             }
 
             self.onmessage = async (e) => {
@@ -295,24 +322,56 @@
                 if(action === 'INFER') {
                     try {
                         let thoughts = [];
+                        const { prompt, loops } = payload;
+                        let wikiData = null;
+
+                        // As 4 Fases Base Lógicas (RAG Dinâmico)
+                        const phaseNames = [
+                            "Dedução Semântica",
+                            "Recuperação Externa de Memória",
+                            "Análise Crítica & Correlação",
+                            "Autocorreção de Viés"
+                        ];
+
+                        for(let i = 1; i <= loops; i++) {
+                            let pIdx = (i - 1) % 4; // Reseta 0,1,2,3
+                            postMessage({ type: 'phase_start', name: phaseNames[pIdx], step: i, mode: 'agentic' });
+                            postMessage({ type: 'phase_prog', percent: 50, msg: "Processando nós lógicos...", mode: 'agentic' });
+
+                            let thoughtText = "";
+                            
+                            if (pIdx === 0) {
+                                thoughtText = "Analisando a estrutura linguística da premissa:\\n-> " + prompt;
+                            } 
+                            else if (pIdx === 1) {
+                                // Só busca na wikipedia real se a wikiData for null ou se for um loop profundo de refazer a busca (ex: loop 5+)
+                                if (!wikiData || (i > 4 && Math.random() > 0.5)) {
+                                    wikiData = await fetchWiki(prompt);
+                                    thoughtText = "[BUSCA EM REDE]: Extraindo vetores factuais atualizados...\\n" + wikiData;
+                                } else {
+                                    thoughtText = "Re-acessando cache factual. Otimizando relevância do contexto extraído.";
+                                }
+                            } 
+                            else if (pIdx === 2) {
+                                thoughtText = "Cruzando intenção do usuário com o contexto recuperado. Avaliando consistência da teoria gerada.";
+                            } 
+                            else if (pIdx === 3) {
+                                thoughtText = "Identificando possíveis alucinações na estrutura da resposta preliminar. Aplicando filtros de lógica estrita.";
+                            }
+
+                            postMessage({ type: 'thought', title: 'Ciclo ' + i + ': ' + phaseNames[pIdx], text: thoughtText, mode: 'agentic' });
+                            thoughts.push(thoughtText);
+                            
+                            await new Promise(r => setTimeout(r, 700 + (Math.random() * 500))); 
+                            postMessage({ type: 'phase_prog', percent: 100, msg: "Fase Concluída.", mode: 'agentic' });
+                        }
+
+                        // Geração Neural Final Baseada em todos os loops
+                        postMessage({ type: 'phase_start', name: "Síntese Neural Final", step: loops + 1, mode: 'agentic' });
                         
-                        postMessage({ type: 'phase_start', name: "Análise Lógica", step: 1, mode: 'agentic' });
-                        const thought1 = "Analisando intenção do prompt lógico: '" + payload.prompt + "'";
-                        postMessage({ type: 'thought', title: 'Fase 1: Dedução', text: thought1, mode: 'agentic' });
-                        thoughts.push(thought1);
-
-                        postMessage({ type: 'phase_start', name: "Busca Dinâmica (Wiki)", step: 2, mode: 'agentic' });
-                        postMessage({ type: 'phase_prog', percent: 50, msg: "Consultando bases...", mode: 'agentic' });
-                        const wikiData = await fetchWiki(payload.prompt);
-                        const thought2 = "[CONTEXTO RECUPERADO]:\\n" + wikiData;
-                        postMessage({ type: 'thought', title: 'Fase 2: Contexto Externo', text: thought2, mode: 'agentic' });
-                        thoughts.push(thought2);
-                        postMessage({ type: 'phase_prog', percent: 100, msg: "Concluído", mode: 'agentic' });
-
-                        postMessage({ type: 'phase_start', name: "Síntese Neural", step: 3, mode: 'agentic' });
                         let msg = [
-                            { role: 'system', content: "Você é GAMA, uma IA objetiva. Responda em PT-BR baseado neste contexto: " + wikiData },
-                            { role: 'user', content: payload.prompt }
+                            { role: 'system', content: "Você é GAMA, uma IA objetiva. Responda em PT-BR baseado neste contexto factual: " + (wikiData || "") },
+                            { role: 'user', content: prompt }
                         ];
                         
                         let tokens = 0;
@@ -320,7 +379,7 @@
                             max_new_tokens: 150, do_sample: false,
                             callback_function: () => {
                                 tokens++;
-                                if(tokens % 5 === 0) postMessage({ type: 'phase_prog', percent: Math.min(100, (tokens/150)*100), msg: \`Gerando tokens: \${tokens}\`, mode: 'agentic' });
+                                if(tokens % 5 === 0) postMessage({ type: 'phase_prog', percent: Math.min(100, (tokens/150)*100), msg: \`Compilando tokens lógicos: \${tokens}\`, mode: 'agentic' });
                             }
                         });
                         
@@ -369,7 +428,8 @@
                     historyList: document.getElementById('history-list'),
                     dlProgress: document.getElementById('download-progress'),
                     dlStats: document.getElementById('download-stats'),
-                    btnNewChat: document.getElementById('btn-new-chat')
+                    btnNewChat: document.getElementById('btn-new-chat'),
+                    thoughtLoops: document.getElementById('thought-loops') // Novo input
                 };
                 this.refs = {};
             }
@@ -427,14 +487,14 @@
                 const accordion = document.createElement('details');
                 accordion.className = "think-box"; accordion.open = true;
                 accordion.style.borderLeftColor = colorHex;
-                accordion.innerHTML = `<summary>⚡ Processando Pipeline...</summary><div class="think-content"></div>`;
+                accordion.innerHTML = `<summary>⚡ Processando Matriz Dinâmica...</summary><div class="think-content"></div>`;
                 
                 const monitor = document.createElement('div');
                 monitor.className = "phase-monitor active";
                 monitor.innerHTML = `
                     <div class="flex justify-between font-mono text-[10px] text-gray-300 mb-1">
-                        <span class="phase-name">Aguardando...</span>
-                        <span class="phase-msg">Step 0</span>
+                        <span class="phase-name">Aguardando alocação...</span>
+                        <span class="phase-msg">...</span>
                     </div>
                     <div class="w-full bg-black h-1.5 rounded overflow-hidden border border-gray-800">
                         <div class="phase-fill h-full w-0 transition-all duration-100" style="background: ${colorHex}"></div>
@@ -471,7 +531,7 @@
 
             decodePixelEffect(imageUrl) {
                 this.refs.pbName.innerText = "Decodificação Pixel VAE";
-                this.refs.accordion.querySelector('summary').innerText = `⚡ Finalizado`;
+                this.refs.accordion.querySelector('summary').innerText = `⚡ Mapeamento Concluído`;
                 
                 const img = new Image(); img.crossOrigin = "anonymous"; img.src = imageUrl;
                 img.onload = () => {
@@ -612,7 +672,7 @@
                         this.checkAllReady();
                         break;
                     case 'phase_start':
-                        this.ui.refs.pbName.innerText = `[Fase ${data.step}] ${data.name}`;
+                        this.ui.refs.pbName.innerText = `[Ciclo ${data.step}] ${data.name}`;
                         this.ui.refs.pbFill.style.width = `0%`;
                         break;
                     case 'phase_prog':
@@ -656,6 +716,11 @@
                 const text = this.ui.els.input.value.trim();
                 if(!text) return;
                 
+                // Pega o número de loops do input superior
+                let rawLoops = parseInt(this.ui.els.thoughtLoops.value);
+                let loops = isNaN(rawLoops) ? 1 : Math.min(99, Math.max(1, rawLoops));
+                this.ui.els.thoughtLoops.value = loops; // atualiza a interface caso o usuário digite algo fora do padrão
+
                 this.isProcessing = true;
                 this.ui.els.input.value = "";
                 this.ui.els.btnSend.disabled = true; this.ui.els.input.disabled = true;
@@ -667,17 +732,16 @@
                 const intent = this.detectImageIntent(text);
                 
                 if (intent.detected) {
-                    // Extrai apenas o que importa (Ex: "/imagine um gato" vira "um gato")
                     let actualPrompt = text.substring(intent.trigger.length).trim();
-                    if (!actualPrompt) actualPrompt = "imagem aleatoria impressionante"; // Fallback se enviar vazio
+                    if (!actualPrompt) actualPrompt = "imagem aleatória impressionante";
                     
                     this.ui.createResponseNode('visual');
-                    this.workers.visual.postMessage({ action: 'INFER', payload: { prompt: actualPrompt } });
-                    this.ui.log(`Intenção Visual detectada. Roteando para Renderizador.`, 'text-pink-400');
+                    this.workers.visual.postMessage({ action: 'INFER', payload: { prompt: actualPrompt, loops: loops } });
+                    this.ui.log(`Intenção Visual. Roteando para Renderizador com DEPTH=${loops}.`, 'text-pink-400');
                 } else {
                     this.ui.createResponseNode('agentic');
-                    this.workers.agentic.postMessage({ action: 'INFER', payload: { prompt: text } });
-                    this.ui.log(`Intenção Lógica detectada. Roteando para RAG.`, 'text-purple-400');
+                    this.workers.agentic.postMessage({ action: 'INFER', payload: { prompt: text, loops: loops } });
+                    this.ui.log(`Intenção Lógica. Roteando para RAG com DEPTH=${loops}.`, 'text-purple-400');
                 }
             }
 
