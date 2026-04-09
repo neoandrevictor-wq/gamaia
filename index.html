@@ -49,6 +49,7 @@
         }
         .glow-active { animation: pulse-glow 2s infinite; }
 
+        /* Acordeão Nativo de Pensamento */
         details.think-box {
             border-left: 2px solid var(--omni-cyan);
             background: rgba(17, 24, 39, 0.6);
@@ -95,6 +96,7 @@
         }
         .think-step-title:first-child { margin-top: 0; }
         
+        /* Monitor e Progresso */
         .phase-monitor {
             background: rgba(0,0,0,0.4);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -105,6 +107,7 @@
         }
         .phase-monitor.active { display: block; }
 
+        /* Canvas Efeito Imagem */
         canvas.pixel-decode {
             image-rendering: -moz-crisp-edges;
             image-rendering: pixelated;
@@ -124,10 +127,9 @@
         }
         @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
+        /* Esconde setas do input number */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        
-        select option { background-color: var(--bg-dark); color: #fff; }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col relative" id="app-body">
@@ -135,29 +137,21 @@
     <header class="h-16 glass-panel border-b border-t-0 border-x-0 flex items-center justify-between px-6 z-10 shrink-0">
         <div class="flex items-center gap-4">
             <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_red]" id="status-indicator"></div>
-            <h1 class="text-xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 hidden sm:block">
+            <h1 class="text-xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
                 GAMA <span class="font-light text-white">OMNI</span>
             </h1>
-            
-            <!-- SELETOR DE MODELO ATUALIZADO -->
-            <div class="flex items-center bg-black/50 p-1.5 rounded border border-gray-700 hover:border-gray-500 transition-colors ml-0 sm:ml-4">
-                <span class="text-[10px] font-bold text-gray-500 mr-2 hidden md:block">LLM:</span>
-                <select id="model-select" class="bg-transparent text-[10px] sm:text-xs text-purple-400 font-mono font-bold focus:outline-none cursor-pointer max-w-[150px] sm:max-w-xs truncate">
-                    <option value="Xenova/Qwen1.5-0.5B-Chat" selected>Xenova/Qwen1.5-0.5B-Chat</option>
-                    <option value="onnx-community/Qwen2.5-0.5B-Instruct">onnx-community/Qwen2.5-0.5B-Instruct</option>
-                    <option value="onnx-community/SmolLM2-360M-Instruct">onnx-community/SmolLM2-360M-Instruct</option>
-                    <option value="Xenova/TinyLlama-1.1B-Chat-v1.0">Xenova/TinyLlama-1.1B-Chat-v1.0</option>
-                </select>
-            </div>
+            <span class="hidden md:inline-block ml-4 text-[10px] font-mono bg-purple-900/50 text-purple-300 border border-purple-700 px-2 py-0.5 rounded">UNIFIED ENGINE</span>
         </div>
         
         <div class="font-mono text-xs text-gray-400 flex gap-4 items-center">
+            <!-- Novo Campo de Loops de Pensamento -->
             <div class="flex items-center bg-black/50 p-1.5 rounded border border-gray-700 hover:border-gray-500 transition-colors" title="Profundidade de pensamento (ciclos)">
-                <span class="text-[10px] font-bold text-gray-500 mr-2 hidden md:inline">DEPTH:</span>
-                <span class="text-[10px] font-bold text-gray-500 mr-1 md:hidden">D:</span>
-                <input type="number" id="thought-loops" min="1" max="99" value="1" class="w-6 bg-transparent text-white font-bold text-center focus:outline-none focus:text-cyan-400">
+                <span class="text-[10px] font-bold text-gray-500 mr-2">DEPTH:</span>
+                <input type="number" id="thought-loops" min="1" max="99" value="1" class="w-8 bg-transparent text-white font-bold text-center focus:outline-none focus:text-cyan-400">
             </div>
-            <div class="hidden lg:block">STATUS: <span id="system-status" class="text-red-400">OFFLINE</span></div>
+            
+            <div class="hidden sm:block text-cyan-400 ml-2">MEM: AUTO</div>
+            <div class="ml-2">STATUS: <span id="system-status" class="text-red-400">OFFLINE</span></div>
         </div>
     </header>
 
@@ -199,7 +193,7 @@
                     </div>
                     
                     <div class="text-gray-300 text-sm leading-relaxed font-mono z-10 space-y-4">
-                        <p>O Motor Unificado interpretará sua intenção e direcionará para o pipeline correto automaticamente.</p>
+                        <p>O Motor Unificado é capaz de interpretar sua intenção e direcionar para o pipeline correto automaticamente.</p>
                         <div class="bg-black/50 p-3 rounded border border-gray-800">
                             <span class="text-purple-400 font-bold block mb-1">1. Texto / Lógica</span>
                             <span class="text-[10px] text-gray-500 block">Ex: "Me explique física quântica", "Qual a capital de SP?"</span>
@@ -208,7 +202,7 @@
                             <span class="text-pink-400 font-bold block mb-1">2. Geração Visual</span>
                             <span class="text-[10px] text-gray-500 block">Ex: "/imagine uma cidade futurista", "Desenhe um gato voador"</span>
                         </div>
-                        <p class="text-[10px] text-gray-500 italic mt-2">* Selecione o Modelo no topo para testes. Modelos novos usam a engine v3 atualizada.</p>
+                        <p class="text-[10px] text-gray-500 italic mt-2">* Ajuste a variável "DEPTH" no topo para controlar os ciclos lógicos de pensamento da IA antes da resposta.</p>
                     </div>
                     
                     <button id="btn-init" class="mt-2 w-full px-6 py-4 bg-gradient-to-r from-cyan-900 to-purple-900 hover:from-cyan-800 hover:to-purple-800 border border-gray-600 text-white font-mono text-sm rounded transition-all z-10 font-bold tracking-wider shadow-lg">
@@ -244,7 +238,7 @@
         ];
 
         // ==========================================
-        // WORKER SCRIPT: IMAGEM
+        // WORKER SCRIPT: IMAGEM (Refatorado para Loops)
         // ==========================================
         const imageWorkerCode = `
             self.onmessage = async (e) => {
@@ -256,10 +250,18 @@
                     try {
                         const { prompt, loops } = payload;
                         const seed = Math.floor(Math.random() * 99999999);
-                        const phaseNames = [ "Análise Semântica (CLIP)", "Expansão Dinâmica de Prompt", "Mapeamento de Pesos Latentes", "Ajuste Fino (CFG & Noise)" ];
+                        
+                        // As 4 Fases Base da Imagem
+                        const phaseNames = [
+                            "Análise Semântica (CLIP)",
+                            "Expansão Dinâmica de Prompt",
+                            "Mapeamento de Pesos Latentes",
+                            "Ajuste Fino (CFG & Noise)"
+                        ];
 
+                        // Executa as fases baseadas na quantidade de Loops selecionada
                         for(let i = 1; i <= loops; i++) {
-                            let pIdx = (i - 1) % 4; 
+                            let pIdx = (i - 1) % 4; // Garante que o índice resete 0,1,2,3 -> 0,1,2,3
                             postMessage({ type: 'phase_start', name: phaseNames[pIdx], step: i, mode: 'visual' });
                             postMessage({ type: 'phase_prog', percent: 50, msg: "Computando matriz...", mode: 'visual' });
                             
@@ -274,9 +276,12 @@
                             postMessage({ type: 'phase_prog', percent: 100, msg: "Fase superada.", mode: 'visual' });
                         }
 
+                        // Fase Final Real (Renderização/Download)
                         postMessage({ type: 'phase_start', name: "Renderização Final (VAE)", step: loops + 1, mode: 'visual' });
                         postMessage({ type: 'thought', title: 'Pipeline Visual Finalizado', text: "Solicitando compilação final da matriz e decodificando imagem...", mode: 'visual' });
+                        
                         const imgUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=1024&height=1024&nologo=true&seed=' + seed;
+                        
                         postMessage({ type: 'complete', image: imgUrl, seed, prompt, mode: 'visual' });
                     } catch(err) { postMessage({ type: 'error', msg: err.message, mode: 'visual' }); }
                 }
@@ -284,14 +289,11 @@
         `;
 
         // ==========================================
-        // WORKER SCRIPT: TEXTO (BIBLIOTECA ATUALIZADA P/ V3)
+        // WORKER SCRIPT: TEXTO (Refatorado para Loops)
         // ==========================================
         const textWorkerCode = `
-            // IMPORTANDO A VERSÃO MAIS RECENTE DA HUGGING FACE (v3+)
-            import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers';
-            
-            env.allowLocalModels = false; 
-            env.useBrowserCache = true;
+            import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
+            env.allowLocalModels = false; env.useBrowserCache = true;
             let generator;
 
             async function fetchWiki(query) {
@@ -305,21 +307,16 @@
                         return extData.query.pages[Object.keys(extData.query.pages)[0]].extract.substring(0, 400);
                     }
                     return "Nenhum dado externo encontrado. Operando com pesos internos.";
-                } catch(e) { return "Falha de conexão externa."; }
+                } catch(e) { return "Falha de conexão. Usando apenas rede neural base."; }
             }
 
             self.onmessage = async (e) => {
                 const { action, payload } = e.data;
                 if(action === 'INIT') {
-                    const modelToLoad = payload.modelName || 'Xenova/Qwen1.5-0.5B-Chat';
-                    try {
-                        generator = await pipeline('text-generation', modelToLoad, {
-                            progress_callback: (x) => postMessage({ type: 'progress', data: x, mode: 'agentic' })
-                        });
-                        postMessage({ type: 'ready', mode: 'agentic', modelLoaded: modelToLoad });
-                    } catch (err) {
-                        postMessage({ type: 'error', msg: "Erro ao carregar modelo: " + err.message, mode: 'agentic' });
-                    }
+                    generator = await pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
+                        progress_callback: (x) => postMessage({ type: 'progress', data: x, mode: 'agentic' })
+                    });
+                    postMessage({ type: 'ready', mode: 'agentic' });
                 }
                 
                 if(action === 'INFER') {
@@ -328,6 +325,7 @@
                         const { prompt, loops } = payload;
                         let wikiData = null;
 
+                        // As 4 Fases Base Lógicas (RAG Dinâmico)
                         const phaseNames = [
                             "Dedução Semântica",
                             "Recuperação Externa de Memória",
@@ -336,7 +334,7 @@
                         ];
 
                         for(let i = 1; i <= loops; i++) {
-                            let pIdx = (i - 1) % 4;
+                            let pIdx = (i - 1) % 4; // Reseta 0,1,2,3
                             postMessage({ type: 'phase_start', name: phaseNames[pIdx], step: i, mode: 'agentic' });
                             postMessage({ type: 'phase_prog', percent: 50, msg: "Processando nós lógicos...", mode: 'agentic' });
 
@@ -344,17 +342,21 @@
                             
                             if (pIdx === 0) {
                                 thoughtText = "Analisando a estrutura linguística da premissa:\\n-> " + prompt;
-                            } else if (pIdx === 1) {
+                            } 
+                            else if (pIdx === 1) {
+                                // Só busca na wikipedia real se a wikiData for null ou se for um loop profundo de refazer a busca (ex: loop 5+)
                                 if (!wikiData || (i > 4 && Math.random() > 0.5)) {
                                     wikiData = await fetchWiki(prompt);
                                     thoughtText = "[BUSCA EM REDE]: Extraindo vetores factuais atualizados...\\n" + wikiData;
                                 } else {
                                     thoughtText = "Re-acessando cache factual. Otimizando relevância do contexto extraído.";
                                 }
-                            } else if (pIdx === 2) {
-                                thoughtText = "Cruzando intenção do usuário com o contexto recuperado. Avaliando consistência.";
-                            } else if (pIdx === 3) {
-                                thoughtText = "Identificando possíveis alucinações na estrutura da resposta. Aplicando filtros.";
+                            } 
+                            else if (pIdx === 2) {
+                                thoughtText = "Cruzando intenção do usuário com o contexto recuperado. Avaliando consistência da teoria gerada.";
+                            } 
+                            else if (pIdx === 3) {
+                                thoughtText = "Identificando possíveis alucinações na estrutura da resposta preliminar. Aplicando filtros de lógica estrita.";
                             }
 
                             postMessage({ type: 'thought', title: 'Ciclo ' + i + ': ' + phaseNames[pIdx], text: thoughtText, mode: 'agentic' });
@@ -364,10 +366,11 @@
                             postMessage({ type: 'phase_prog', percent: 100, msg: "Fase Concluída.", mode: 'agentic' });
                         }
 
+                        // Geração Neural Final Baseada em todos os loops
                         postMessage({ type: 'phase_start', name: "Síntese Neural Final", step: loops + 1, mode: 'agentic' });
                         
                         let msg = [
-                            { role: 'system', content: "Você é GAMA, uma IA objetiva. Responda em PT-BR. Contexto adicional: " + (wikiData || "") },
+                            { role: 'system', content: "Você é GAMA, uma IA objetiva. Responda em PT-BR baseado neste contexto factual: " + (wikiData || "") },
                             { role: 'user', content: prompt }
                         ];
                         
@@ -380,15 +383,9 @@
                             }
                         });
                         
-                        // Parse robusto compatível com a biblioteca antiga e a nova (v3)
-                        let text = "";
-                        const genText = out[0].generated_text;
-                        
-                        if (Array.isArray(genText)) {
-                            text = genText[genText.length - 1].content || genText[genText.length - 1].text || "";
-                        } else {
-                            text = String(genText).split('<|im_start|>assistant').pop().replace('<|im_end|>', '');
-                        }
+                        const text = Array.isArray(out[0].generated_text) 
+                            ? out[0].generated_text[out[0].generated_text.length - 1].content 
+                            : String(out[0].generated_text).split('<|im_start|>assistant').pop().replace('<|im_end|>', '');
 
                         postMessage({ type: 'complete', text: text.trim(), thoughts, prompt: payload.prompt, mode: 'agentic' });
                     } catch(err) { postMessage({ type: 'error', msg: err.message, mode: 'agentic' }); }
@@ -397,18 +394,26 @@
         `;
 
         // ==========================================
-        // UI E LÓGICA PRINCIPAL MANTIDAS
+        // DATABASE / MEMORY
         // ==========================================
         class OmniMemory {
-            constructor() { this.db = JSON.parse(localStorage.getItem('gama_omni_db')) || { history: [] }; }
+            constructor() {
+                this.db = JSON.parse(localStorage.getItem('gama_omni_db')) || { history: [] };
+            }
             save() { localStorage.setItem('gama_omni_db', JSON.stringify(this.db)); }
             addRecord(item) {
-                item.id = Date.now(); item.date = new Date().toLocaleTimeString();
-                this.db.history.unshift(item); this.save(); return item;
+                item.id = Date.now();
+                item.date = new Date().toLocaleTimeString();
+                this.db.history.unshift(item); 
+                this.save(); 
+                return item;
             }
             clear() { this.db = { history: [] }; this.save(); }
         }
 
+        // ==========================================
+        // UI ENGINE
+        // ==========================================
         class UIEngine {
             constructor() {
                 this.els = {
@@ -424,16 +429,17 @@
                     dlProgress: document.getElementById('download-progress'),
                     dlStats: document.getElementById('download-stats'),
                     btnNewChat: document.getElementById('btn-new-chat'),
-                    thoughtLoops: document.getElementById('thought-loops'),
-                    modelSelect: document.getElementById('model-select')
+                    thoughtLoops: document.getElementById('thought-loops') // Novo input
                 };
                 this.refs = {};
             }
 
             log(msg, colorClass = 'text-gray-400') {
                 const el = document.createElement('div');
-                el.className = colorClass; el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}`;
-                this.els.console.appendChild(el); this.els.console.scrollTop = this.els.console.scrollHeight;
+                el.className = colorClass;
+                el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}`;
+                this.els.console.appendChild(el);
+                this.els.console.scrollTop = this.els.console.scrollHeight;
             }
 
             renderHistory(list, loadCallback) {
@@ -442,9 +448,16 @@
                     const div = document.createElement('div');
                     const isImg = item.type === 'image';
                     div.className = `history-item p-2 bg-gray-900/40 rounded border border-gray-800 ${isImg ? 'img-type' : ''}`;
+                    
                     const icon = isImg ? '🎨' : '📝';
-                    div.innerHTML = `<div class="flex items-center gap-2 text-gray-200 font-bold mb-1 truncate text-[11px]"><span>${icon}</span> <span>${item.prompt}</span></div><div class="text-[9px] text-gray-500 pl-5">${item.date}</div>`;
-                    div.onclick = () => loadCallback(item); this.els.historyList.appendChild(div);
+                    div.innerHTML = `
+                        <div class="flex items-center gap-2 text-gray-200 font-bold mb-1 truncate text-[11px]">
+                            <span>${icon}</span> <span>${item.prompt}</span>
+                        </div>
+                        <div class="text-[9px] text-gray-500 pl-5">${item.date}</div>`;
+                    
+                    div.onclick = () => loadCallback(item);
+                    this.els.historyList.appendChild(div);
                 });
             }
 
@@ -453,7 +466,8 @@
                 const color = state === 'ready' ? 'green' : state === 'processing' ? 'var(--omni-cyan)' : 'red';
                 this.els.indicator.style.backgroundColor = color;
                 this.els.indicator.style.boxShadow = `0 0 10px ${color}`;
-                if(state === 'processing') this.els.indicator.classList.add('glow-active'); else this.els.indicator.classList.remove('glow-active');
+                if(state === 'processing') this.els.indicator.classList.add('glow-active');
+                else this.els.indicator.classList.remove('glow-active');
             }
 
             createResponseNode(mode) {
@@ -461,30 +475,52 @@
                 const colorHex = isVis ? 'var(--omni-pink)' : 'var(--omni-purple)';
                 const label = isVis ? 'GAMA IA // PIPELINE VISUAL' : 'GAMA IA // KERNEL LÓGICO';
 
-                const div = document.createElement('div'); div.className = "flex justify-start w-full";
+                const div = document.createElement('div');
+                div.className = "flex justify-start w-full";
+                
                 const innerDiv = document.createElement('div');
                 innerDiv.className = `glass-panel p-4 max-w-[90%] md:max-w-[75%] rounded-tr-xl rounded-br-xl rounded-bl-xl border-l-2 shadow-lg flex flex-col gap-3 w-full`;
                 innerDiv.style.borderColor = colorHex;
+                
                 innerDiv.innerHTML = `<div class="flex items-center gap-2 mb-1"><span class="font-mono text-[10px]" style="color: ${colorHex}">${label}</span></div>`;
                 
-                const accordion = document.createElement('details'); accordion.className = "think-box"; accordion.open = true; accordion.style.borderLeftColor = colorHex;
+                const accordion = document.createElement('details');
+                accordion.className = "think-box"; accordion.open = true;
+                accordion.style.borderLeftColor = colorHex;
                 accordion.innerHTML = `<summary>⚡ Processando Matriz Dinâmica...</summary><div class="think-content"></div>`;
                 
-                const monitor = document.createElement('div'); monitor.className = "phase-monitor active";
-                monitor.innerHTML = `<div class="flex justify-between font-mono text-[10px] text-gray-300 mb-1"><span class="phase-name">Aguardando alocação...</span><span class="phase-msg">...</span></div><div class="w-full bg-black h-1.5 rounded overflow-hidden border border-gray-800"><div class="phase-fill h-full w-0 transition-all duration-100" style="background: ${colorHex}"></div></div>`;
+                const monitor = document.createElement('div');
+                monitor.className = "phase-monitor active";
+                monitor.innerHTML = `
+                    <div class="flex justify-between font-mono text-[10px] text-gray-300 mb-1">
+                        <span class="phase-name">Aguardando alocação...</span>
+                        <span class="phase-msg">...</span>
+                    </div>
+                    <div class="w-full bg-black h-1.5 rounded overflow-hidden border border-gray-800">
+                        <div class="phase-fill h-full w-0 transition-all duration-100" style="background: ${colorHex}"></div>
+                    </div>`;
 
-                const contentArea = document.createElement('div'); contentArea.className = "w-full rounded-lg relative overflow-hidden";
+                const contentArea = document.createElement('div');
+                contentArea.className = "w-full rounded-lg relative overflow-hidden";
                 
                 if(isVis) {
-                    contentArea.innerHTML = `<div class="image-skeleton absolute inset-0"><span class="font-mono text-xs text-gray-500 z-10 bg-black/50 px-2 py-1 rounded">Construindo Latentes...</span></div>`; contentArea.style.minHeight = '300px';
+                    contentArea.innerHTML = `<div class="image-skeleton absolute inset-0"><span class="font-mono text-xs text-gray-500 z-10 bg-black/50 px-2 py-1 rounded">Construindo Latentes...</span></div>`;
+                    contentArea.style.minHeight = '300px';
                 } else {
                     contentArea.innerHTML = `<p class="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap inline text-node"></p><span class="inline-block w-2 h-4 cursor-blink align-middle ml-1 hidden cursor" style="background: ${colorHex}"></span>`;
                 }
 
-                innerDiv.append(accordion, monitor, contentArea); div.appendChild(innerDiv); this.els.chat.appendChild(div); this.els.chat.scrollTop = this.els.chat.scrollHeight;
+                innerDiv.append(accordion, monitor, contentArea);
+                div.appendChild(innerDiv);
+                this.els.chat.appendChild(div);
+                this.els.chat.scrollTop = this.els.chat.scrollHeight;
+                
                 this.refs = { accordion, thinkContent: accordion.querySelector('.think-content'), contentArea, monitor, pbName: monitor.querySelector('.phase-name'), pbMsg: monitor.querySelector('.phase-msg'), pbFill: monitor.querySelector('.phase-fill') };
                 
-                if(!isVis) { this.refs.textNode = contentArea.querySelector('.text-node'); this.refs.cursor = contentArea.querySelector('.cursor'); }
+                if(!isVis) {
+                    this.refs.textNode = contentArea.querySelector('.text-node');
+                    this.refs.cursor = contentArea.querySelector('.cursor');
+                }
             }
 
             appendUserMsg(text) {
@@ -494,43 +530,73 @@
             }
 
             decodePixelEffect(imageUrl) {
-                this.refs.pbName.innerText = "Decodificação Pixel VAE"; this.refs.accordion.querySelector('summary').innerText = `⚡ Mapeamento Concluído`;
+                this.refs.pbName.innerText = "Decodificação Pixel VAE";
+                this.refs.accordion.querySelector('summary').innerText = `⚡ Mapeamento Concluído`;
+                
                 const img = new Image(); img.crossOrigin = "anonymous"; img.src = imageUrl;
                 img.onload = () => {
                     this.refs.contentArea.innerHTML = '';
-                    const canvas = document.createElement('canvas'); canvas.className = "pixel-decode w-full h-auto rounded-lg shadow-lg";
+                    const canvas = document.createElement('canvas');
+                    canvas.className = "pixel-decode w-full h-auto rounded-lg shadow-lg";
                     canvas.width = img.width; canvas.height = img.height;
-                    const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false; this.refs.contentArea.appendChild(canvas);
+                    const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
+                    this.refs.contentArea.appendChild(canvas);
+
                     const sizes = [8, 16, 32, 64, 128, 256, 512, 1024]; let step = 0;
                     const draw = () => {
                         if(step < sizes.length) {
-                            const res = sizes[step]; this.refs.pbFill.style.width = `${(step/sizes.length)*100}%`; this.refs.pbMsg.innerText = `${res}px`;
-                            ctx.drawImage(img, 0, 0, res, res); ctx.drawImage(canvas, 0, 0, res, res, 0, 0, canvas.width, canvas.height); step++; setTimeout(draw, 100);
+                            const res = sizes[step];
+                            this.refs.pbFill.style.width = `${(step/sizes.length)*100}%`;
+                            this.refs.pbMsg.innerText = `${res}px`;
+                            ctx.drawImage(img, 0, 0, res, res);
+                            ctx.drawImage(canvas, 0, 0, res, res, 0, 0, canvas.width, canvas.height);
+                            step++; setTimeout(draw, 100);
                         } else {
                             ctx.imageSmoothingEnabled = true; ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                            setTimeout(() => { this.refs.contentArea.innerHTML = `<img src="${imageUrl}" class="w-full h-auto rounded-lg shadow-lg border border-gray-700">`; this.refs.monitor.classList.remove('active'); this.refs.accordion.open = false; window.App.finish(); }, 300);
+                            setTimeout(() => {
+                                this.refs.contentArea.innerHTML = `<img src="${imageUrl}" class="w-full h-auto rounded-lg shadow-lg border border-gray-700">`;
+                                this.refs.monitor.classList.remove('active'); this.refs.accordion.open = false;
+                                window.App.finish();
+                            }, 300);
                         }
                     }; draw();
                 };
             }
 
             streamText(text) {
-                this.refs.monitor.classList.remove('active'); this.refs.accordion.open = false; this.refs.cursor.classList.remove('hidden');
+                this.refs.monitor.classList.remove('active');
+                this.refs.accordion.open = false;
+                this.refs.cursor.classList.remove('hidden');
+                
                 let i = 0; const speed = Math.max(1, Math.floor(text.length/60));
                 const type = () => {
-                    if (i < text.length) { this.refs.textNode.textContent += text.substring(i, i + speed); i += speed; this.els.chat.scrollTop = this.els.chat.scrollHeight; requestAnimationFrame(type);
-                    } else { this.refs.cursor.remove(); window.App.finish(); }
+                    if (i < text.length) {
+                        this.refs.textNode.textContent += text.substring(i, i + speed);
+                        i += speed; this.els.chat.scrollTop = this.els.chat.scrollHeight;
+                        requestAnimationFrame(type);
+                    } else {
+                        this.refs.cursor.remove(); window.App.finish();
+                    }
                 }; requestAnimationFrame(type);
             }
 
             escapeHTML(str) { return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t])); }
         }
 
+        // ==========================================
+        // MAIN APP CONTROLLER
+        // ==========================================
         class AppController {
             constructor() {
-                this.mem = new OmniMemory(); this.ui = new UIEngine(); this.workers = { visual: null, agentic: null };
-                this.states = { visual: false, agentic: false }; this.isProcessing = false; this.filesTrack = new Map();
-                this.bindEvents(); this.loadHistoryUI();
+                this.mem = new OmniMemory();
+                this.ui = new UIEngine();
+                this.workers = { visual: null, agentic: null };
+                this.states = { visual: false, agentic: false };
+                this.isProcessing = false;
+                this.filesTrack = new Map();
+                
+                this.bindEvents();
+                this.loadHistoryUI();
             }
 
             bindEvents() {
@@ -538,112 +604,155 @@
                 this.ui.els.btnSend.onclick = () => this.send();
                 this.ui.els.input.onkeypress = (e) => { if(e.key === 'Enter' && !this.isProcessing && !this.ui.els.btnSend.disabled) this.send(); };
                 this.ui.els.btnNewChat.onclick = () => { this.ui.els.chat.innerHTML = ''; this.mem.clear(); this.loadHistoryUI(); };
-                
-                this.ui.els.modelSelect.onchange = () => { if (this.states.agentic) this.rebootAgenticEngine(); };
             }
 
             loadHistoryUI() {
                 this.ui.renderHistory(this.mem.db.history, (item) => {
-                    this.ui.els.chat.innerHTML = ''; this.ui.appendUserMsg(item.prompt);
-                    const div = document.createElement('div'); const colorClass = item.type === 'image' ? 'border-pink-500' : 'border-purple-500';
+                    this.ui.els.chat.innerHTML = '';
+                    this.ui.appendUserMsg(item.prompt);
+                    const div = document.createElement('div');
+                    const colorClass = item.type === 'image' ? 'border-pink-500' : 'border-purple-500';
                     div.className = `glass-panel p-4 max-w-[80%] rounded-tr-xl rounded-br-xl rounded-bl-xl border-l-2 mb-4 ${colorClass}`;
-                    if(item.type === 'image') { div.innerHTML = `<img src="${item.url}" class="w-full rounded-lg">`; } else { div.innerHTML = `<p class="text-sm text-gray-200 whitespace-pre-wrap">${item.answer}</p>`; }
+                    
+                    if(item.type === 'image') {
+                        div.innerHTML = `<img src="${item.url}" class="w-full rounded-lg">`;
+                    } else {
+                        div.innerHTML = `<p class="text-sm text-gray-200 whitespace-pre-wrap">${item.answer}</p>`;
+                    }
                     this.ui.els.chat.appendChild(div);
                 });
             }
 
             bootEngines() {
-                this.ui.els.btnInit.disabled = true; this.ui.els.btnInit.innerText = "[ CARREGANDO MODELOS... ]"; this.ui.updateStatus("INICIALIZANDO", "processing");
+                this.ui.els.btnInit.disabled = true;
+                this.ui.els.btnInit.innerText = "[ CARREGANDO MODELOS... ]";
+                this.ui.updateStatus("INICIALIZANDO", "processing");
 
-                const selectedModel = this.ui.els.modelSelect.value;
-                this.ui.log(`Inicializando Motor Lógico com: ${selectedModel}`, 'text-purple-400');
-
+                // Initialize Text Worker
                 const textBlob = new Blob([textWorkerCode], { type: 'application/javascript' });
                 this.workers.agentic = new Worker(URL.createObjectURL(textBlob), { type: 'module' });
                 this.workers.agentic.onmessage = (e) => this.handleWorkerMsg(e.data);
-                this.workers.agentic.postMessage({ action: 'INIT', payload: { modelName: selectedModel } });
+                this.workers.agentic.postMessage({ action: 'INIT' });
 
+                // Initialize Image Worker
                 const imgBlob = new Blob([imageWorkerCode], { type: 'application/javascript' });
                 this.workers.visual = new Worker(URL.createObjectURL(imgBlob), { type: 'module' });
                 this.workers.visual.onmessage = (e) => this.handleWorkerMsg(e.data);
                 this.workers.visual.postMessage({ action: 'INIT' });
             }
 
-            rebootAgenticEngine() {
-                this.states.agentic = false; this.ui.updateStatus("TROCANDO LLM", "processing");
-                this.ui.els.btnSend.disabled = true; this.ui.els.input.disabled = true;
-                
-                this.filesTrack.clear(); this.ui.els.dlProgress.style.width = '0%'; this.ui.els.dlStats.innerText = '0.0 MB';
-
-                if (this.workers.agentic) this.workers.agentic.terminate();
-
-                const selectedModel = this.ui.els.modelSelect.value;
-                this.ui.log(`=== HOT SWAP INICIADO ===`, 'text-yellow-400'); this.ui.log(`Carregando novos pesos: ${selectedModel}`, 'text-yellow-400');
-
-                const textBlob = new Blob([textWorkerCode], { type: 'application/javascript' });
-                this.workers.agentic = new Worker(URL.createObjectURL(textBlob), { type: 'module' });
-                this.workers.agentic.onmessage = (e) => this.handleWorkerMsg(e.data);
-                this.workers.agentic.postMessage({ action: 'INIT', payload: { modelName: selectedModel } });
-            }
-
             checkAllReady() {
                 if(this.states.visual && this.states.agentic) {
-                    this.ui.els.bootScreen.style.opacity = '0'; setTimeout(() => this.ui.els.bootScreen.style.display = 'none', 500);
-                    this.ui.els.input.disabled = false; this.ui.els.btnSend.disabled = false; this.ui.els.input.focus();
-                    this.ui.updateStatus("ONLINE", "ready"); this.ui.log(`SISTEMA OMNI PRONTO.`, 'text-green-400');
+                    this.ui.els.bootScreen.style.opacity = '0';
+                    setTimeout(() => this.ui.els.bootScreen.style.display = 'none', 500);
+                    this.ui.els.input.disabled = false; this.ui.els.btnSend.disabled = false;
+                    this.ui.els.input.focus();
+                    this.ui.updateStatus("ONLINE", "ready");
+                    this.ui.log(`SISTEMA OMNI CARREGADO. Modelos unificados em operação.`, 'text-green-400');
                 }
             }
 
             handleWorkerMsg(data) {
                 const mode = data.mode;
+                
                 switch(data.type) {
                     case 'progress':
                         if(mode === 'agentic' && data.data.name) {
                             this.filesTrack.set(data.data.name, { loaded: data.data.loaded || 0, total: data.data.total || 0 });
                             let tL = 0, tT = 0; this.filesTrack.forEach(v => { tL += v.loaded; tT += v.total; });
-                            if(tT > 0) { this.ui.els.dlProgress.style.width = `${(tL/tT)*100}%`; this.ui.els.dlStats.innerText = `${(tL/1024/1024).toFixed(1)}MB / ${(tT/1024/1024).toFixed(1)}MB`; }
+                            if(tT > 0) {
+                                this.ui.els.dlProgress.style.width = `${(tL/tT)*100}%`;
+                                this.ui.els.dlStats.innerText = `${(tL/1024/1024).toFixed(1)}MB / ${(tT/1024/1024).toFixed(1)}MB`;
+                            }
                         }
                         break;
                     case 'ready':
                         this.states[mode] = true;
-                        if(mode === 'agentic') {
-                            this.ui.log(`LLM (${data.modelLoaded}) montado.`, 'text-cyan-300');
-                            if(this.states.visual && this.ui.els.bootScreen.style.display === 'none') { this.ui.els.input.disabled = false; this.ui.els.btnSend.disabled = false; this.ui.updateStatus("ONLINE", "ready"); }
-                        } else { this.ui.log(`Motor Visual ativado.`, 'text-pink-300'); }
+                        this.ui.log(`Sub-módulo [${mode.toUpperCase()}] ativado.`, 'text-cyan-300');
                         this.checkAllReady();
                         break;
-                    case 'phase_start': this.ui.refs.pbName.innerText = `[Ciclo ${data.step}] ${data.name}`; this.ui.refs.pbFill.style.width = `0%`; break;
-                    case 'phase_prog': this.ui.refs.pbFill.style.width = `${data.percent}%`; this.ui.refs.pbMsg.innerText = data.msg; break;
-                    case 'thought': if(this.ui.refs.thinkContent) { this.ui.refs.thinkContent.insertAdjacentHTML('beforeend', `<span class="think-step-title">${data.title}</span>${this.ui.escapeHTML(data.text)}\n\n`); this.ui.els.chat.scrollTop = this.ui.els.chat.scrollHeight; } break;
+                    case 'phase_start':
+                        this.ui.refs.pbName.innerText = `[Ciclo ${data.step}] ${data.name}`;
+                        this.ui.refs.pbFill.style.width = `0%`;
+                        break;
+                    case 'phase_prog':
+                        this.ui.refs.pbFill.style.width = `${data.percent}%`;
+                        this.ui.refs.pbMsg.innerText = data.msg;
+                        break;
+                    case 'thought':
+                        if(this.ui.refs.thinkContent) {
+                            this.ui.refs.thinkContent.insertAdjacentHTML('beforeend', `<span class="think-step-title">${data.title}</span>${this.ui.escapeHTML(data.text)}\n\n`);
+                            this.ui.els.chat.scrollTop = this.ui.els.chat.scrollHeight;
+                        }
+                        break;
                     case 'complete':
-                        if(mode === 'visual') { this.mem.addRecord({ type: 'image', prompt: data.prompt, url: data.image, seed: data.seed }); this.ui.decodePixelEffect(data.image); } 
-                        else { this.mem.addRecord({ type: 'text', prompt: data.prompt, answer: data.text }); this.ui.streamText(data.text); }
-                        this.loadHistoryUI(); break;
-                    case 'error': this.ui.log(`Erro no módulo ${mode}: ${data.msg}`, 'text-red-500'); this.finish(); break;
+                        if(mode === 'visual') {
+                            this.mem.addRecord({ type: 'image', prompt: data.prompt, url: data.image, seed: data.seed });
+                            this.ui.decodePixelEffect(data.image);
+                        } else {
+                            this.mem.addRecord({ type: 'text', prompt: data.prompt, answer: data.text });
+                            this.ui.streamText(data.text);
+                        }
+                        this.loadHistoryUI();
+                        break;
+                    case 'error':
+                        this.ui.log(`Erro no módulo ${mode}: ${data.msg}`, 'text-red-500');
+                        this.finish();
+                        break;
                 }
             }
 
             detectImageIntent(text) {
                 const lowerText = text.toLowerCase().trim();
-                for (let trigger of IMAGE_TRIGGERS) { if (lowerText.startsWith(trigger)) return { detected: true, trigger: trigger }; } return { detected: false };
+                for (let trigger of IMAGE_TRIGGERS) {
+                    if (lowerText.startsWith(trigger)) {
+                        return { detected: true, trigger: trigger };
+                    }
+                }
+                return { detected: false };
             }
 
             send() {
-                const text = this.ui.els.input.value.trim(); if(!text) return;
-                let rawLoops = parseInt(this.ui.els.thoughtLoops.value); let loops = isNaN(rawLoops) ? 1 : Math.min(99, Math.max(1, rawLoops)); this.ui.els.thoughtLoops.value = loops;
-                this.isProcessing = true; this.ui.els.input.value = ""; this.ui.els.btnSend.disabled = true; this.ui.els.input.disabled = true; this.ui.updateStatus("PROCESSANDO", "processing");
+                const text = this.ui.els.input.value.trim();
+                if(!text) return;
+                
+                // Pega o número de loops do input superior
+                let rawLoops = parseInt(this.ui.els.thoughtLoops.value);
+                let loops = isNaN(rawLoops) ? 1 : Math.min(99, Math.max(1, rawLoops));
+                this.ui.els.thoughtLoops.value = loops; // atualiza a interface caso o usuário digite algo fora do padrão
+
+                this.isProcessing = true;
+                this.ui.els.input.value = "";
+                this.ui.els.btnSend.disabled = true; this.ui.els.input.disabled = true;
+                this.ui.updateStatus("PROCESSANDO", "processing");
+
                 this.ui.appendUserMsg(text);
+
+                // Lógica de Roteamento (OMNI)
                 const intent = this.detectImageIntent(text);
                 
                 if (intent.detected) {
-                    let actualPrompt = text.substring(intent.trigger.length).trim(); if (!actualPrompt) actualPrompt = "imagem aleatória impressionante";
-                    this.ui.createResponseNode('visual'); this.workers.visual.postMessage({ action: 'INFER', payload: { prompt: actualPrompt, loops: loops } }); this.ui.log(`Intenção Visual. DEPTH=${loops}.`, 'text-pink-400');
+                    let actualPrompt = text.substring(intent.trigger.length).trim();
+                    if (!actualPrompt) actualPrompt = "imagem aleatória impressionante";
+                    
+                    this.ui.createResponseNode('visual');
+                    this.workers.visual.postMessage({ action: 'INFER', payload: { prompt: actualPrompt, loops: loops } });
+                    this.ui.log(`Intenção Visual. Roteando para Renderizador com DEPTH=${loops}.`, 'text-pink-400');
                 } else {
-                    this.ui.createResponseNode('agentic'); this.workers.agentic.postMessage({ action: 'INFER', payload: { prompt: text, loops: loops } }); this.ui.log(`Intenção Lógica. DEPTH=${loops}.`, 'text-purple-400');
+                    this.ui.createResponseNode('agentic');
+                    this.workers.agentic.postMessage({ action: 'INFER', payload: { prompt: text, loops: loops } });
+                    this.ui.log(`Intenção Lógica. Roteando para RAG com DEPTH=${loops}.`, 'text-purple-400');
                 }
             }
-            finish() { this.isProcessing = false; this.ui.els.btnSend.disabled = false; this.ui.els.input.disabled = false; this.ui.els.input.focus(); this.ui.updateStatus("ONLINE", "ready"); }
+
+            finish() {
+                this.isProcessing = false;
+                this.ui.els.btnSend.disabled = false; this.ui.els.input.disabled = false;
+                this.ui.els.input.focus();
+                this.ui.updateStatus("ONLINE", "ready");
+            }
         }
+
         window.addEventListener('DOMContentLoaded', () => { window.App = new AppController(); });
     </script>
 </body>
