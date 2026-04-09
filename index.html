@@ -150,7 +150,7 @@
                 <input type="number" id="thought-loops" min="1" max="99" value="1" class="w-8 bg-transparent text-white font-bold text-center focus:outline-none focus:text-cyan-400">
             </div>
             
-            <div class="hidden sm:block text-cyan-400 ml-2">MEM: AUTO</div>
+            <div class="hidden sm:block text-cyan-400 ml-2">MEM: OMNI</div>
             <div class="ml-2">STATUS: <span id="system-status" class="text-red-400">OFFLINE</span></div>
         </div>
     </header>
@@ -289,7 +289,7 @@
         `;
 
         // ==========================================
-        // WORKER SCRIPT: TEXTO (Refatorado para Loops)
+        // WORKER SCRIPT: TEXTO (Com Memória de Contexto)
         // ==========================================
         const textWorkerCode = `
             import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
@@ -322,7 +322,7 @@
                 if(action === 'INFER') {
                     try {
                         let thoughts = [];
-                        const { prompt, loops } = payload;
+                        const { prompt, loops, history = [] } = payload;
                         let wikiData = null;
 
                         // As 4 Fases Base Lógicas (RAG Dinâmico)
@@ -366,13 +366,22 @@
                             postMessage({ type: 'phase_prog', percent: 100, msg: "Fase Concluída.", mode: 'agentic' });
                         }
 
-                        // Geração Neural Final Baseada em todos os loops
+                        // Geração Neural Final Baseada em todos os loops e no Histórico
                         postMessage({ type: 'phase_start', name: "Síntese Neural Final", step: loops + 1, mode: 'agentic' });
                         
+                        // Montagem do ChatML com Memória de Contexto
                         let msg = [
-                            { role: 'system', content: "Você é GAMA, uma IA objetiva. Responda em PT-BR baseado neste contexto factual: " + (wikiData || "") },
-                            { role: 'user', content: prompt }
+                            { role: 'system', content: "Você é GAMA, uma IA objetiva. Responda em PT-BR baseado neste contexto factual: " + (wikiData || "Nenhum") }
                         ];
+
+                        // Injeta o histórico de contexto na conversa
+                        for (let h of history) {
+                            msg.push({ role: 'user', content: h.user });
+                            msg.push({ role: 'assistant', content: h.assistant });
+                        }
+
+                        // Injeta a pergunta atual
+                        msg.push({ role: 'user', content: prompt });
                         
                         let tokens = 0;
                         const out = await generator(msg, {
@@ -429,7 +438,7 @@
                     dlProgress: document.getElementById('download-progress'),
                     dlStats: document.getElementById('download-stats'),
                     btnNewChat: document.getElementById('btn-new-chat'),
-                    thoughtLoops: document.getElementById('thought-loops') // Novo input
+                    thoughtLoops: document.getElementById('thought-loops')
                 };
                 this.refs = {};
             }
@@ -719,7 +728,7 @@
                 // Pega o número de loops do input superior
                 let rawLoops = parseInt(this.ui.els.thoughtLoops.value);
                 let loops = isNaN(rawLoops) ? 1 : Math.min(99, Math.max(1, rawLoops));
-                this.ui.els.thoughtLoops.value = loops; // atualiza a interface caso o usuário digite algo fora do padrão
+                this.ui.els.thoughtLoops.value = loops; // atualiza a interface
 
                 this.isProcessing = true;
                 this.ui.els.input.value = "";
@@ -740,8 +749,29 @@
                     this.ui.log(`Intenção Visual. Roteando para Renderizador com DEPTH=${loops}.`, 'text-pink-400');
                 } else {
                     this.ui.createResponseNode('agentic');
-                    this.workers.agentic.postMessage({ action: 'INFER', payload: { prompt: text, loops: loops } });
-                    this.ui.log(`Intenção Lógica. Roteando para RAG com DEPTH=${loops}.`, 'text-purple-400');
+
+                    // --- INÍCIO DA LÓGICA DE MEMÓRIA DE CONTEXTO ---
+                    // Pega os últimos 3 registros de texto (ignora imagens)
+                    // A memória salva com unshift (mais novo no índice 0), então fatiamos e invertemos para a ordem cronológica
+                    const recentHistory = this.mem.db.history
+                        .filter(item => item.type === 'text')
+                        .slice(0, 3) 
+                        .reverse()
+                        .map(item => ({
+                            user: item.prompt,
+                            assistant: item.answer.substring(0, 300) // Truncamos respostas muito longas para economizar RAM/Tokens
+                        }));
+                    // --- FIM DA LÓGICA DE MEMÓRIA ---
+
+                    this.workers.agentic.postMessage({ 
+                        action: 'INFER', 
+                        payload: { 
+                            prompt: text, 
+                            loops: loops,
+                            history: recentHistory // Envia o histórico para o Worker
+                        } 
+                    });
+                    this.ui.log(`Intenção Lógica. Roteando para RAG (Contexto: ${recentHistory.length} msgs) DEPTH=${loops}.`, 'text-purple-400');
                 }
             }
 
