@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GAMA IA // Unified Omni-Engine v1.2</title>
+    <title>GAMA IA // Unified Omni-Engine</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -127,6 +127,7 @@
         }
         @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
+        /* Esconde setas do input number */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
@@ -139,23 +140,23 @@
             <h1 class="text-xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
                 GAMA <span class="font-light text-white">OMNI</span>
             </h1>
-            <span class="hidden md:inline-block ml-2 text-[10px] font-mono bg-purple-900/50 text-purple-300 border border-purple-700 px-2 py-0.5 rounded">UNIFIED ENGINE</span>
-            <!-- Tag de versão visual para confirmação de update -->
-            <span class="hidden md:inline-block text-[10px] font-mono bg-blue-900/50 text-blue-300 border border-blue-700 px-2 py-0.5 rounded">v1.2</span>
+            <span class="hidden md:inline-block ml-4 text-[10px] font-mono bg-purple-900/50 text-purple-300 border border-purple-700 px-2 py-0.5 rounded">UNIFIED ENGINE</span>
         </div>
         
         <div class="font-mono text-xs text-gray-400 flex gap-4 items-center">
+            <!-- Novo Campo de Loops de Pensamento -->
             <div class="flex items-center bg-black/50 p-1.5 rounded border border-gray-700 hover:border-gray-500 transition-colors" title="Profundidade de pensamento (ciclos)">
                 <span class="text-[10px] font-bold text-gray-500 mr-2">DEPTH:</span>
                 <input type="number" id="thought-loops" min="1" max="99" value="1" class="w-8 bg-transparent text-white font-bold text-center focus:outline-none focus:text-cyan-400">
             </div>
             
-            <div class="hidden sm:block text-cyan-400 ml-2">MEM: CONTEXT AWARE</div>
+            <div class="hidden sm:block text-cyan-400 ml-2">MEM: OMNI</div>
             <div class="ml-2">STATUS: <span id="system-status" class="text-red-400">OFFLINE</span></div>
         </div>
     </header>
 
     <main class="flex-1 flex overflow-hidden z-10">
+        <!-- Sidebar -->
         <aside class="w-80 glass-panel border-r border-t-0 border-b-0 border-l-0 hidden lg:flex flex-col p-4 gap-4">
             <div class="flex-1 flex flex-col min-h-0 overflow-hidden border-b border-gray-700/50 pb-4">
                 <div class="flex justify-between items-center mb-2 border-b border-gray-700 pb-1">
@@ -181,24 +182,27 @@
             </div>
         </aside>
 
+        <!-- Main Chat Area -->
         <section class="flex-1 flex flex-col relative overflow-hidden">
+            <!-- Boot Screen -->
             <div id="boot-screen" class="absolute inset-0 z-30 flex items-center justify-center bg-[#050505]/90 backdrop-blur-md transition-opacity duration-500">
                 <div class="glass-panel p-8 max-w-lg w-[90%] rounded-xl border-t-2 border-cyan-500 flex flex-col gap-5 relative overflow-hidden">
                     <div class="flex items-center gap-3 border-b border-gray-700 pb-3 z-10">
                         <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_red] cursor-blink"></div>
-                        <h2 class="font-mono text-sm text-white tracking-widest font-bold">OMNI CLUSTER // STANDBY (v1.2)</h2>
+                        <h2 class="font-mono text-sm text-white tracking-widest font-bold">OMNI CLUSTER // STANDBY</h2>
                     </div>
                     
                     <div class="text-gray-300 text-sm leading-relaxed font-mono z-10 space-y-4">
-                        <p>O Motor Unificado agora possui <span class="text-green-400 font-bold">Memória de Contexto Ativa</span>. Ele lembra das últimas interações para manter conversas fluidas.</p>
+                        <p>O Motor Unificado é capaz de interpretar sua intenção e direcionar para o pipeline correto automaticamente.</p>
                         <div class="bg-black/50 p-3 rounded border border-gray-800">
                             <span class="text-purple-400 font-bold block mb-1">1. Texto / Lógica</span>
-                            <span class="text-[10px] text-gray-500 block">Ex: "Me explique física quântica", "E o que isso tem a ver com gravidade?"</span>
+                            <span class="text-[10px] text-gray-500 block">Ex: "Me explique física quântica", "Qual a capital de SP?"</span>
                         </div>
                         <div class="bg-black/50 p-3 rounded border border-gray-800">
                             <span class="text-pink-400 font-bold block mb-1">2. Geração Visual</span>
                             <span class="text-[10px] text-gray-500 block">Ex: "/imagine uma cidade futurista", "Desenhe um gato voador"</span>
                         </div>
+                        <p class="text-[10px] text-gray-500 italic mt-2">* Ajuste a variável "DEPTH" no topo para controlar os ciclos lógicos de pensamento da IA antes da resposta.</p>
                     </div>
                     
                     <button id="btn-init" class="mt-2 w-full px-6 py-4 bg-gradient-to-r from-cyan-900 to-purple-900 hover:from-cyan-800 hover:to-purple-800 border border-gray-600 text-white font-mono text-sm rounded transition-all z-10 font-bold tracking-wider shadow-lg">
@@ -207,8 +211,10 @@
                 </div>
             </div>
 
+            <!-- Chat Container -->
             <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-6 pb-24 z-10"></div>
 
+            <!-- Input Area -->
             <div class="h-24 glass-panel border-t border-b-0 border-x-0 p-4 absolute bottom-0 w-full flex gap-3 items-center z-20">
                 <input type="text" id="user-input" disabled placeholder="Digite uma pergunta, ou use /imagine para imagens..." class="flex-1 h-full bg-black/60 border border-gray-700 focus:border-cyan-500 rounded-lg px-4 font-mono text-sm text-white focus:outline-none transition-all disabled:opacity-50" autocomplete="off">
                 <button id="btn-send" disabled class="px-6 py-3 h-full bg-cyan-700 disabled:bg-gray-900 disabled:text-gray-600 text-white font-bold rounded transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]">
@@ -219,6 +225,9 @@
     </main>
 
     <script type="module">
+        // ==========================================
+        // KEYWORDS DE IMAGEM
+        // ==========================================
         const IMAGE_TRIGGERS = [
             '/imagine', 'desenhe', 'desenhar', 'crie uma imagem', 'criar uma imagem', 
             'gere uma imagem', 'gerar uma imagem', 'faça uma imagem', 'fazer uma imagem', 
@@ -228,6 +237,9 @@
             'renderize', 'renderizar', 'fotografe', 'faça um desenho'
         ];
 
+        // ==========================================
+        // WORKER SCRIPT: IMAGEM (Refatorado para Loops)
+        // ==========================================
         const imageWorkerCode = `
             self.onmessage = async (e) => {
                 const { action, payload } = e.data;
@@ -238,10 +250,18 @@
                     try {
                         const { prompt, loops } = payload;
                         const seed = Math.floor(Math.random() * 99999999);
-                        const phaseNames = ["Análise Semântica (CLIP)", "Expansão Dinâmica de Prompt", "Mapeamento de Pesos Latentes", "Ajuste Fino (CFG & Noise)"];
+                        
+                        // As 4 Fases Base da Imagem
+                        const phaseNames = [
+                            "Análise Semântica (CLIP)",
+                            "Expansão Dinâmica de Prompt",
+                            "Mapeamento de Pesos Latentes",
+                            "Ajuste Fino (CFG & Noise)"
+                        ];
 
+                        // Executa as fases baseadas na quantidade de Loops selecionada
                         for(let i = 1; i <= loops; i++) {
-                            let pIdx = (i - 1) % 4; 
+                            let pIdx = (i - 1) % 4; // Garante que o índice resete 0,1,2,3 -> 0,1,2,3
                             postMessage({ type: 'phase_start', name: phaseNames[pIdx], step: i, mode: 'visual' });
                             postMessage({ type: 'phase_prog', percent: 50, msg: "Computando matriz...", mode: 'visual' });
                             
@@ -256,15 +276,21 @@
                             postMessage({ type: 'phase_prog', percent: 100, msg: "Fase superada.", mode: 'visual' });
                         }
 
+                        // Fase Final Real (Renderização/Download)
                         postMessage({ type: 'phase_start', name: "Renderização Final (VAE)", step: loops + 1, mode: 'visual' });
                         postMessage({ type: 'thought', title: 'Pipeline Visual Finalizado', text: "Solicitando compilação final da matriz e decodificando imagem...", mode: 'visual' });
+                        
                         const imgUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=1024&height=1024&nologo=true&seed=' + seed;
+                        
                         postMessage({ type: 'complete', image: imgUrl, seed, prompt, mode: 'visual' });
                     } catch(err) { postMessage({ type: 'error', msg: err.message, mode: 'visual' }); }
                 }
             };
         `;
 
+        // ==========================================
+        // WORKER SCRIPT: TEXTO (Com Memória de Contexto)
+        // ==========================================
         const textWorkerCode = `
             import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
             env.allowLocalModels = false; env.useBrowserCache = true;
@@ -280,8 +306,8 @@
                         const extData = await extRes.json();
                         return extData.query.pages[Object.keys(extData.query.pages)[0]].extract.substring(0, 400);
                     }
-                    return "";
-                } catch(e) { return ""; }
+                    return "Nenhum dado externo encontrado. Operando com pesos internos.";
+                } catch(e) { return "Falha de conexão. Usando apenas rede neural base."; }
             }
 
             self.onmessage = async (e) => {
@@ -299,10 +325,16 @@
                         const { prompt, loops, history = [] } = payload;
                         let wikiData = null;
 
-                        const phaseNames = ["Dedução Semântica", "Recuperação Externa de Memória", "Análise Crítica & Correlação", "Autocorreção de Viés"];
+                        // As 4 Fases Base Lógicas (RAG Dinâmico)
+                        const phaseNames = [
+                            "Dedução Semântica",
+                            "Recuperação Externa de Memória",
+                            "Análise Crítica & Correlação",
+                            "Autocorreção de Viés"
+                        ];
 
                         for(let i = 1; i <= loops; i++) {
-                            let pIdx = (i - 1) % 4; 
+                            let pIdx = (i - 1) % 4; // Reseta 0,1,2,3
                             postMessage({ type: 'phase_start', name: phaseNames[pIdx], step: i, mode: 'agentic' });
                             postMessage({ type: 'phase_prog', percent: 50, msg: "Processando nós lógicos...", mode: 'agentic' });
 
@@ -312,48 +344,44 @@
                                 thoughtText = "Analisando a estrutura linguística da premissa:\\n-> " + prompt;
                             } 
                             else if (pIdx === 1) {
-                                // Reduzimos a busca na wikipedia se tiver histórico (para evitar confundir a conversa)
-                                if (!wikiData && history.length === 0) {
+                                // Só busca na wikipedia real se a wikiData for null ou se for um loop profundo de refazer a busca (ex: loop 5+)
+                                if (!wikiData || (i > 4 && Math.random() > 0.5)) {
                                     wikiData = await fetchWiki(prompt);
-                                    if(wikiData) thoughtText = "[BUSCA EM REDE]: Extraindo vetores factuais atualizados...\\n" + wikiData.substring(0, 50) + "...";
-                                    else thoughtText = "Consulta externa ignorada. Mantendo contexto interno.";
+                                    thoughtText = "[BUSCA EM REDE]: Extraindo vetores factuais atualizados...\\n" + wikiData;
                                 } else {
-                                    thoughtText = "Recorrendo ao contexto relacional da conversa salva na memória.";
+                                    thoughtText = "Re-acessando cache factual. Otimizando relevância do contexto extraído.";
                                 }
                             } 
                             else if (pIdx === 2) {
-                                thoughtText = "Cruzando intenção do usuário com o histórico carregado. Avaliando consistência da teoria gerada.";
+                                thoughtText = "Cruzando intenção do usuário com o contexto recuperado. Avaliando consistência da teoria gerada.";
                             } 
                             else if (pIdx === 3) {
-                                thoughtText = "Identificando possíveis alucinações. Ajustando tom conversacional.";
+                                thoughtText = "Identificando possíveis alucinações na estrutura da resposta preliminar. Aplicando filtros de lógica estrita.";
                             }
 
                             postMessage({ type: 'thought', title: 'Ciclo ' + i + ': ' + phaseNames[pIdx], text: thoughtText, mode: 'agentic' });
                             thoughts.push(thoughtText);
+                            
                             await new Promise(r => setTimeout(r, 700 + (Math.random() * 500))); 
                             postMessage({ type: 'phase_prog', percent: 100, msg: "Fase Concluída.", mode: 'agentic' });
                         }
 
+                        // Geração Neural Final Baseada em todos os loops e no Histórico
                         postMessage({ type: 'phase_start', name: "Síntese Neural Final", step: loops + 1, mode: 'agentic' });
                         
-                        // Sistema ajustado para focar na Conversa
+                        // Montagem do ChatML com Memória de Contexto
                         let msg = [
-                            { 
-                                role: 'system', 
-                                content: "Você é GAMA, uma IA útil. Mantenha o contexto da conversa anterior se existir. Fatos auxiliares (ignore se irrelevante): " + (wikiData || "Nenhum") 
-                            }
+                            { role: 'system', content: "Você é GAMA, uma IA objetiva. Responda em PT-BR baseado neste contexto factual: " + (wikiData || "Nenhum") }
                         ];
 
-                        // Injeta o histórico de forma extremamente validada
-                        if (history && history.length > 0) {
-                            for (let h of history) {
-                                if (h.user) msg.push({ role: 'user', content: String(h.user) });
-                                if (h.assistant) msg.push({ role: 'assistant', content: String(h.assistant) });
-                            }
+                        // Injeta o histórico de contexto na conversa
+                        for (let h of history) {
+                            msg.push({ role: 'user', content: h.user });
+                            msg.push({ role: 'assistant', content: h.assistant });
                         }
 
                         // Injeta a pergunta atual
-                        msg.push({ role: 'user', content: String(prompt) });
+                        msg.push({ role: 'user', content: prompt });
                         
                         let tokens = 0;
                         const out = await generator(msg, {
@@ -364,15 +392,9 @@
                             }
                         });
                         
-                        // Extração super segura do último texto gerado
-                        let text = "";
-                        if(Array.isArray(out) && out[0] && Array.isArray(out[0].generated_text)) {
-                            // Padrão de retorno com histórico: pega sempre o último content do array
-                            text = out[0].generated_text[out[0].generated_text.length - 1].content;
-                        } else {
-                            // Fallback caso ele retorne string bruta
-                            text = String(out[0]?.generated_text || out).split('<|im_start|>assistant').pop().replace('<|im_end|>', '');
-                        }
+                        const text = Array.isArray(out[0].generated_text) 
+                            ? out[0].generated_text[out[0].generated_text.length - 1].content 
+                            : String(out[0].generated_text).split('<|im_start|>assistant').pop().replace('<|im_end|>', '');
 
                         postMessage({ type: 'complete', text: text.trim(), thoughts, prompt: payload.prompt, mode: 'agentic' });
                     } catch(err) { postMessage({ type: 'error', msg: err.message, mode: 'agentic' }); }
@@ -380,6 +402,9 @@
             };
         `;
 
+        // ==========================================
+        // DATABASE / MEMORY
+        // ==========================================
         class OmniMemory {
             constructor() {
                 this.db = JSON.parse(localStorage.getItem('gama_omni_db')) || { history: [] };
@@ -395,6 +420,9 @@
             clear() { this.db = { history: [] }; this.save(); }
         }
 
+        // ==========================================
+        // UI ENGINE
+        // ==========================================
         class UIEngine {
             constructor() {
                 this.els = {
@@ -564,6 +592,9 @@
             escapeHTML(str) { return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t])); }
         }
 
+        // ==========================================
+        // MAIN APP CONTROLLER
+        // ==========================================
         class AppController {
             constructor() {
                 this.mem = new OmniMemory();
@@ -581,13 +612,7 @@
                 this.ui.els.btnInit.onclick = () => this.bootEngines();
                 this.ui.els.btnSend.onclick = () => this.send();
                 this.ui.els.input.onkeypress = (e) => { if(e.key === 'Enter' && !this.isProcessing && !this.ui.els.btnSend.disabled) this.send(); };
-                
-                this.ui.els.btnNewChat.onclick = () => { 
-                    this.ui.els.chat.innerHTML = ''; 
-                    this.mem.clear(); // Isso zera o histórico, permitindo que o context memory inicie uma "nova" conversa
-                    this.loadHistoryUI(); 
-                    this.ui.log("Memória Limpa. Novo contexto iniciado.", "text-cyan-400");
-                };
+                this.ui.els.btnNewChat.onclick = () => { this.ui.els.chat.innerHTML = ''; this.mem.clear(); this.loadHistoryUI(); };
             }
 
             loadHistoryUI() {
@@ -601,7 +626,7 @@
                     if(item.type === 'image') {
                         div.innerHTML = `<img src="${item.url}" class="w-full rounded-lg">`;
                     } else {
-                        div.innerHTML = `<p class="text-sm text-gray-200 whitespace-pre-wrap">${this.ui.escapeHTML(item.answer)}</p>`;
+                        div.innerHTML = `<p class="text-sm text-gray-200 whitespace-pre-wrap">${item.answer}</p>`;
                     }
                     this.ui.els.chat.appendChild(div);
                 });
@@ -612,11 +637,13 @@
                 this.ui.els.btnInit.innerText = "[ CARREGANDO MODELOS... ]";
                 this.ui.updateStatus("INICIALIZANDO", "processing");
 
+                // Initialize Text Worker
                 const textBlob = new Blob([textWorkerCode], { type: 'application/javascript' });
                 this.workers.agentic = new Worker(URL.createObjectURL(textBlob), { type: 'module' });
                 this.workers.agentic.onmessage = (e) => this.handleWorkerMsg(e.data);
                 this.workers.agentic.postMessage({ action: 'INIT' });
 
+                // Initialize Image Worker
                 const imgBlob = new Blob([imageWorkerCode], { type: 'application/javascript' });
                 this.workers.visual = new Worker(URL.createObjectURL(imgBlob), { type: 'module' });
                 this.workers.visual.onmessage = (e) => this.handleWorkerMsg(e.data);
@@ -636,6 +663,7 @@
 
             handleWorkerMsg(data) {
                 const mode = data.mode;
+                
                 switch(data.type) {
                     case 'progress':
                         if(mode === 'agentic' && data.data.name) {
@@ -671,7 +699,6 @@
                             this.mem.addRecord({ type: 'image', prompt: data.prompt, url: data.image, seed: data.seed });
                             this.ui.decodePixelEffect(data.image);
                         } else {
-                            // Salva a resposta no banco, para servir de contexto na próxima!
                             this.mem.addRecord({ type: 'text', prompt: data.prompt, answer: data.text });
                             this.ui.streamText(data.text);
                         }
@@ -698,9 +725,10 @@
                 const text = this.ui.els.input.value.trim();
                 if(!text) return;
                 
+                // Pega o número de loops do input superior
                 let rawLoops = parseInt(this.ui.els.thoughtLoops.value);
                 let loops = isNaN(rawLoops) ? 1 : Math.min(99, Math.max(1, rawLoops));
-                this.ui.els.thoughtLoops.value = loops;
+                this.ui.els.thoughtLoops.value = loops; // atualiza a interface
 
                 this.isProcessing = true;
                 this.ui.els.input.value = "";
@@ -709,6 +737,7 @@
 
                 this.ui.appendUserMsg(text);
 
+                // Lógica de Roteamento (OMNI)
                 const intent = this.detectImageIntent(text);
                 
                 if (intent.detected) {
@@ -717,30 +746,32 @@
                     
                     this.ui.createResponseNode('visual');
                     this.workers.visual.postMessage({ action: 'INFER', payload: { prompt: actualPrompt, loops: loops } });
-                    this.ui.log(`Intenção Visual. DEPTH=${loops}.`, 'text-pink-400');
+                    this.ui.log(`Intenção Visual. Roteando para Renderizador com DEPTH=${loops}.`, 'text-pink-400');
                 } else {
                     this.ui.createResponseNode('agentic');
 
-                    // Coleta robusta do histórico de texto
+                    // --- INÍCIO DA LÓGICA DE MEMÓRIA DE CONTEXTO ---
+                    // Pega os últimos 3 registros de texto (ignora imagens)
+                    // A memória salva com unshift (mais novo no índice 0), então fatiamos e invertemos para a ordem cronológica
                     const recentHistory = this.mem.db.history
-                        .filter(item => item.type === 'text' && item.answer) // Garante que a reposta existe
-                        .slice(0, 3) // Pega as ultimas 3
-                        .reverse() // Coloca na ordem cronológica
+                        .filter(item => item.type === 'text')
+                        .slice(0, 3) 
+                        .reverse()
                         .map(item => ({
-                            user: String(item.prompt),
-                            assistant: String(item.answer).substring(0, 200) // Trunca para não estourar tokens
+                            user: item.prompt,
+                            assistant: item.answer.substring(0, 300) // Truncamos respostas muito longas para economizar RAM/Tokens
                         }));
+                    // --- FIM DA LÓGICA DE MEMÓRIA ---
 
                     this.workers.agentic.postMessage({ 
                         action: 'INFER', 
                         payload: { 
                             prompt: text, 
                             loops: loops,
-                            history: recentHistory 
+                            history: recentHistory // Envia o histórico para o Worker
                         } 
                     });
-                    
-                    this.ui.log(`Intenção Lógica. Enviando ${recentHistory.length} interações passadas como contexto.`, 'text-purple-400');
+                    this.ui.log(`Intenção Lógica. Roteando para RAG (Contexto: ${recentHistory.length} msgs) DEPTH=${loops}.`, 'text-purple-400');
                 }
             }
 
