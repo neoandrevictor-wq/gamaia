@@ -130,6 +130,9 @@
         /* Esconde setas do input number */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        /* Estiliza select para fundo escuro */
+        select option { background-color: var(--bg-dark); color: #fff; }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col relative" id="app-body">
@@ -137,21 +140,31 @@
     <header class="h-16 glass-panel border-b border-t-0 border-x-0 flex items-center justify-between px-6 z-10 shrink-0">
         <div class="flex items-center gap-4">
             <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_red]" id="status-indicator"></div>
-            <h1 class="text-xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
+            <h1 class="text-xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 hidden sm:block">
                 GAMA <span class="font-light text-white">OMNI</span>
             </h1>
-            <span class="hidden md:inline-block ml-4 text-[10px] font-mono bg-purple-900/50 text-purple-300 border border-purple-700 px-2 py-0.5 rounded">UNIFIED ENGINE</span>
+            
+            <!-- SELETOR DE MODELO -->
+            <div class="flex items-center bg-black/50 p-1.5 rounded border border-gray-700 hover:border-gray-500 transition-colors ml-0 sm:ml-4">
+                <span class="text-[10px] font-bold text-gray-500 mr-2 hidden md:block">LLM:</span>
+                <select id="model-select" class="bg-transparent text-[10px] sm:text-xs text-purple-400 font-mono font-bold focus:outline-none cursor-pointer max-w-[150px] sm:max-w-xs truncate">
+                    <option value="Xenova/Qwen1.5-0.5B-Chat" selected>Xenova/Qwen1.5-0.5B-Chat</option>
+                    <option value="Xenova/Qwen2-0.5B-Instruct">Xenova/Qwen2-0.5B-Instruct</option>
+                    <option value="Xenova/TinyLlama-1.1B-Chat-v1.0">Xenova/TinyLlama-1.1B-Chat-v1.0</option>
+                    <option value="Xenova/SmolLM-360M-Instruct">Xenova/SmolLM-360M-Instruct</option>
+                </select>
+            </div>
         </div>
         
         <div class="font-mono text-xs text-gray-400 flex gap-4 items-center">
-            <!-- Novo Campo de Loops de Pensamento -->
+            <!-- Campo de Loops de Pensamento -->
             <div class="flex items-center bg-black/50 p-1.5 rounded border border-gray-700 hover:border-gray-500 transition-colors" title="Profundidade de pensamento (ciclos)">
-                <span class="text-[10px] font-bold text-gray-500 mr-2">DEPTH:</span>
-                <input type="number" id="thought-loops" min="1" max="99" value="1" class="w-8 bg-transparent text-white font-bold text-center focus:outline-none focus:text-cyan-400">
+                <span class="text-[10px] font-bold text-gray-500 mr-2 hidden md:inline">DEPTH:</span>
+                <span class="text-[10px] font-bold text-gray-500 mr-1 md:hidden">D:</span>
+                <input type="number" id="thought-loops" min="1" max="99" value="1" class="w-6 bg-transparent text-white font-bold text-center focus:outline-none focus:text-cyan-400">
             </div>
             
-            <div class="hidden sm:block text-cyan-400 ml-2">MEM: AUTO</div>
-            <div class="ml-2">STATUS: <span id="system-status" class="text-red-400">OFFLINE</span></div>
+            <div class="hidden lg:block">STATUS: <span id="system-status" class="text-red-400">OFFLINE</span></div>
         </div>
     </header>
 
@@ -193,7 +206,7 @@
                     </div>
                     
                     <div class="text-gray-300 text-sm leading-relaxed font-mono z-10 space-y-4">
-                        <p>O Motor Unificado é capaz de interpretar sua intenção e direcionar para o pipeline correto automaticamente.</p>
+                        <p>O Motor Unificado interpretará sua intenção e direcionará para o pipeline correto automaticamente.</p>
                         <div class="bg-black/50 p-3 rounded border border-gray-800">
                             <span class="text-purple-400 font-bold block mb-1">1. Texto / Lógica</span>
                             <span class="text-[10px] text-gray-500 block">Ex: "Me explique física quântica", "Qual a capital de SP?"</span>
@@ -202,7 +215,7 @@
                             <span class="text-pink-400 font-bold block mb-1">2. Geração Visual</span>
                             <span class="text-[10px] text-gray-500 block">Ex: "/imagine uma cidade futurista", "Desenhe um gato voador"</span>
                         </div>
-                        <p class="text-[10px] text-gray-500 italic mt-2">* Ajuste a variável "DEPTH" no topo para controlar os ciclos lógicos de pensamento da IA antes da resposta.</p>
+                        <p class="text-[10px] text-gray-500 italic mt-2">* Troque o Modelo LLM (topo) para experimentar diferentes raciocínios. Ajuste a "DEPTH" para ciclos lógicos.</p>
                     </div>
                     
                     <button id="btn-init" class="mt-2 w-full px-6 py-4 bg-gradient-to-r from-cyan-900 to-purple-900 hover:from-cyan-800 hover:to-purple-800 border border-gray-600 text-white font-mono text-sm rounded transition-all z-10 font-bold tracking-wider shadow-lg">
@@ -238,7 +251,7 @@
         ];
 
         // ==========================================
-        // WORKER SCRIPT: IMAGEM (Refatorado para Loops)
+        // WORKER SCRIPT: IMAGEM
         // ==========================================
         const imageWorkerCode = `
             self.onmessage = async (e) => {
@@ -251,7 +264,6 @@
                         const { prompt, loops } = payload;
                         const seed = Math.floor(Math.random() * 99999999);
                         
-                        // As 4 Fases Base da Imagem
                         const phaseNames = [
                             "Análise Semântica (CLIP)",
                             "Expansão Dinâmica de Prompt",
@@ -259,9 +271,8 @@
                             "Ajuste Fino (CFG & Noise)"
                         ];
 
-                        // Executa as fases baseadas na quantidade de Loops selecionada
                         for(let i = 1; i <= loops; i++) {
-                            let pIdx = (i - 1) % 4; // Garante que o índice resete 0,1,2,3 -> 0,1,2,3
+                            let pIdx = (i - 1) % 4; 
                             postMessage({ type: 'phase_start', name: phaseNames[pIdx], step: i, mode: 'visual' });
                             postMessage({ type: 'phase_prog', percent: 50, msg: "Computando matriz...", mode: 'visual' });
                             
@@ -276,7 +287,6 @@
                             postMessage({ type: 'phase_prog', percent: 100, msg: "Fase superada.", mode: 'visual' });
                         }
 
-                        // Fase Final Real (Renderização/Download)
                         postMessage({ type: 'phase_start', name: "Renderização Final (VAE)", step: loops + 1, mode: 'visual' });
                         postMessage({ type: 'thought', title: 'Pipeline Visual Finalizado', text: "Solicitando compilação final da matriz e decodificando imagem...", mode: 'visual' });
                         
@@ -289,7 +299,7 @@
         `;
 
         // ==========================================
-        // WORKER SCRIPT: TEXTO (Refatorado para Loops)
+        // WORKER SCRIPT: TEXTO (Aceita Modelo Dinâmico)
         // ==========================================
         const textWorkerCode = `
             import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
@@ -307,16 +317,22 @@
                         return extData.query.pages[Object.keys(extData.query.pages)[0]].extract.substring(0, 400);
                     }
                     return "Nenhum dado externo encontrado. Operando com pesos internos.";
-                } catch(e) { return "Falha de conexão. Usando apenas rede neural base."; }
+                } catch(e) { return "Falha de conexão externa."; }
             }
 
             self.onmessage = async (e) => {
                 const { action, payload } = e.data;
                 if(action === 'INIT') {
-                    generator = await pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
-                        progress_callback: (x) => postMessage({ type: 'progress', data: x, mode: 'agentic' })
-                    });
-                    postMessage({ type: 'ready', mode: 'agentic' });
+                    // Agora o nome do modelo vem do Payload
+                    const modelToLoad = payload.modelName || 'Xenova/Qwen1.5-0.5B-Chat';
+                    try {
+                        generator = await pipeline('text-generation', modelToLoad, {
+                            progress_callback: (x) => postMessage({ type: 'progress', data: x, mode: 'agentic' })
+                        });
+                        postMessage({ type: 'ready', mode: 'agentic', modelLoaded: modelToLoad });
+                    } catch (err) {
+                        postMessage({ type: 'error', msg: "Erro ao carregar modelo: " + err.message, mode: 'agentic' });
+                    }
                 }
                 
                 if(action === 'INFER') {
@@ -325,7 +341,6 @@
                         const { prompt, loops } = payload;
                         let wikiData = null;
 
-                        // As 4 Fases Base Lógicas (RAG Dinâmico)
                         const phaseNames = [
                             "Dedução Semântica",
                             "Recuperação Externa de Memória",
@@ -334,7 +349,7 @@
                         ];
 
                         for(let i = 1; i <= loops; i++) {
-                            let pIdx = (i - 1) % 4; // Reseta 0,1,2,3
+                            let pIdx = (i - 1) % 4;
                             postMessage({ type: 'phase_start', name: phaseNames[pIdx], step: i, mode: 'agentic' });
                             postMessage({ type: 'phase_prog', percent: 50, msg: "Processando nós lógicos...", mode: 'agentic' });
 
@@ -342,21 +357,17 @@
                             
                             if (pIdx === 0) {
                                 thoughtText = "Analisando a estrutura linguística da premissa:\\n-> " + prompt;
-                            } 
-                            else if (pIdx === 1) {
-                                // Só busca na wikipedia real se a wikiData for null ou se for um loop profundo de refazer a busca (ex: loop 5+)
+                            } else if (pIdx === 1) {
                                 if (!wikiData || (i > 4 && Math.random() > 0.5)) {
                                     wikiData = await fetchWiki(prompt);
                                     thoughtText = "[BUSCA EM REDE]: Extraindo vetores factuais atualizados...\\n" + wikiData;
                                 } else {
                                     thoughtText = "Re-acessando cache factual. Otimizando relevância do contexto extraído.";
                                 }
-                            } 
-                            else if (pIdx === 2) {
-                                thoughtText = "Cruzando intenção do usuário com o contexto recuperado. Avaliando consistência da teoria gerada.";
-                            } 
-                            else if (pIdx === 3) {
-                                thoughtText = "Identificando possíveis alucinações na estrutura da resposta preliminar. Aplicando filtros de lógica estrita.";
+                            } else if (pIdx === 2) {
+                                thoughtText = "Cruzando intenção do usuário com o contexto recuperado. Avaliando consistência.";
+                            } else if (pIdx === 3) {
+                                thoughtText = "Identificando possíveis alucinações na estrutura da resposta. Aplicando filtros.";
                             }
 
                             postMessage({ type: 'thought', title: 'Ciclo ' + i + ': ' + phaseNames[pIdx], text: thoughtText, mode: 'agentic' });
@@ -366,11 +377,10 @@
                             postMessage({ type: 'phase_prog', percent: 100, msg: "Fase Concluída.", mode: 'agentic' });
                         }
 
-                        // Geração Neural Final Baseada em todos os loops
                         postMessage({ type: 'phase_start', name: "Síntese Neural Final", step: loops + 1, mode: 'agentic' });
                         
                         let msg = [
-                            { role: 'system', content: "Você é GAMA, uma IA objetiva. Responda em PT-BR baseado neste contexto factual: " + (wikiData || "") },
+                            { role: 'system', content: "Você é GAMA, uma IA objetiva. Responda em PT-BR. Contexto adicional: " + (wikiData || "") },
                             { role: 'user', content: prompt }
                         ];
                         
@@ -429,7 +439,8 @@
                     dlProgress: document.getElementById('download-progress'),
                     dlStats: document.getElementById('download-stats'),
                     btnNewChat: document.getElementById('btn-new-chat'),
-                    thoughtLoops: document.getElementById('thought-loops') // Novo input
+                    thoughtLoops: document.getElementById('thought-loops'),
+                    modelSelect: document.getElementById('model-select') // Referência do Select
                 };
                 this.refs = {};
             }
@@ -604,6 +615,13 @@
                 this.ui.els.btnSend.onclick = () => this.send();
                 this.ui.els.input.onkeypress = (e) => { if(e.key === 'Enter' && !this.isProcessing && !this.ui.els.btnSend.disabled) this.send(); };
                 this.ui.els.btnNewChat.onclick = () => { this.ui.els.chat.innerHTML = ''; this.mem.clear(); this.loadHistoryUI(); };
+                
+                // Hot Swap de Modelo LLM
+                this.ui.els.modelSelect.onchange = () => {
+                    if (this.states.agentic) {
+                        this.rebootAgenticEngine();
+                    }
+                };
             }
 
             loadHistoryUI() {
@@ -628,17 +646,48 @@
                 this.ui.els.btnInit.innerText = "[ CARREGANDO MODELOS... ]";
                 this.ui.updateStatus("INICIALIZANDO", "processing");
 
+                const selectedModel = this.ui.els.modelSelect.value;
+                this.ui.log(`Inicializando Motor Lógico com: ${selectedModel}`, 'text-purple-400');
+
                 // Initialize Text Worker
                 const textBlob = new Blob([textWorkerCode], { type: 'application/javascript' });
                 this.workers.agentic = new Worker(URL.createObjectURL(textBlob), { type: 'module' });
                 this.workers.agentic.onmessage = (e) => this.handleWorkerMsg(e.data);
-                this.workers.agentic.postMessage({ action: 'INIT' });
+                this.workers.agentic.postMessage({ action: 'INIT', payload: { modelName: selectedModel } });
 
                 // Initialize Image Worker
                 const imgBlob = new Blob([imageWorkerCode], { type: 'application/javascript' });
                 this.workers.visual = new Worker(URL.createObjectURL(imgBlob), { type: 'module' });
                 this.workers.visual.onmessage = (e) => this.handleWorkerMsg(e.data);
                 this.workers.visual.postMessage({ action: 'INIT' });
+            }
+
+            // Função para trocar o modelo sem recarregar a página
+            rebootAgenticEngine() {
+                this.states.agentic = false;
+                this.ui.updateStatus("TROCANDO LLM", "processing");
+                this.ui.els.btnSend.disabled = true;
+                this.ui.els.input.disabled = true;
+                
+                // Reseta UI de download
+                this.filesTrack.clear();
+                this.ui.els.dlProgress.style.width = '0%';
+                this.ui.els.dlStats.innerText = '0.0 MB';
+
+                // Mata o worker antigo para liberar memória
+                if (this.workers.agentic) {
+                    this.workers.agentic.terminate();
+                }
+
+                const selectedModel = this.ui.els.modelSelect.value;
+                this.ui.log(`=== HOT SWAP INICIADO ===`, 'text-yellow-400');
+                this.ui.log(`Carregando novos pesos neurais: ${selectedModel}`, 'text-yellow-400');
+
+                // Recria o worker de texto
+                const textBlob = new Blob([textWorkerCode], { type: 'application/javascript' });
+                this.workers.agentic = new Worker(URL.createObjectURL(textBlob), { type: 'module' });
+                this.workers.agentic.onmessage = (e) => this.handleWorkerMsg(e.data);
+                this.workers.agentic.postMessage({ action: 'INIT', payload: { modelName: selectedModel } });
             }
 
             checkAllReady() {
@@ -648,7 +697,7 @@
                     this.ui.els.input.disabled = false; this.ui.els.btnSend.disabled = false;
                     this.ui.els.input.focus();
                     this.ui.updateStatus("ONLINE", "ready");
-                    this.ui.log(`SISTEMA OMNI CARREGADO. Modelos unificados em operação.`, 'text-green-400');
+                    this.ui.log(`SISTEMA OMNI PRONTO.`, 'text-green-400');
                 }
             }
 
@@ -668,7 +717,17 @@
                         break;
                     case 'ready':
                         this.states[mode] = true;
-                        this.ui.log(`Sub-módulo [${mode.toUpperCase()}] ativado.`, 'text-cyan-300');
+                        if(mode === 'agentic') {
+                            this.ui.log(`LLM (${data.modelLoaded}) montado na memória.`, 'text-cyan-300');
+                            // Se foi um Hot Swap e a interface visual já estava pronta, libera o input
+                            if(this.states.visual && this.ui.els.bootScreen.style.display === 'none') {
+                                this.ui.els.input.disabled = false;
+                                this.ui.els.btnSend.disabled = false;
+                                this.ui.updateStatus("ONLINE", "ready");
+                            }
+                        } else {
+                            this.ui.log(`Motor Visual ativado.`, 'text-pink-300');
+                        }
                         this.checkAllReady();
                         break;
                     case 'phase_start':
@@ -716,10 +775,9 @@
                 const text = this.ui.els.input.value.trim();
                 if(!text) return;
                 
-                // Pega o número de loops do input superior
                 let rawLoops = parseInt(this.ui.els.thoughtLoops.value);
                 let loops = isNaN(rawLoops) ? 1 : Math.min(99, Math.max(1, rawLoops));
-                this.ui.els.thoughtLoops.value = loops; // atualiza a interface caso o usuário digite algo fora do padrão
+                this.ui.els.thoughtLoops.value = loops;
 
                 this.isProcessing = true;
                 this.ui.els.input.value = "";
@@ -728,7 +786,6 @@
 
                 this.ui.appendUserMsg(text);
 
-                // Lógica de Roteamento (OMNI)
                 const intent = this.detectImageIntent(text);
                 
                 if (intent.detected) {
@@ -737,11 +794,11 @@
                     
                     this.ui.createResponseNode('visual');
                     this.workers.visual.postMessage({ action: 'INFER', payload: { prompt: actualPrompt, loops: loops } });
-                    this.ui.log(`Intenção Visual. Roteando para Renderizador com DEPTH=${loops}.`, 'text-pink-400');
+                    this.ui.log(`Intenção Visual. DEPTH=${loops}.`, 'text-pink-400');
                 } else {
                     this.ui.createResponseNode('agentic');
                     this.workers.agentic.postMessage({ action: 'INFER', payload: { prompt: text, loops: loops } });
-                    this.ui.log(`Intenção Lógica. Roteando para RAG com DEPTH=${loops}.`, 'text-purple-400');
+                    this.ui.log(`Intenção Lógica. DEPTH=${loops}.`, 'text-purple-400');
                 }
             }
 
